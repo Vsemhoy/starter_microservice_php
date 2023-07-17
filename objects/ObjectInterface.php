@@ -2,6 +2,6 @@
 namespace objects;
     interface ObjectInterface
     {
-        public function Get($name);
+        public function CreateTableQueryText();
     }
 ?>

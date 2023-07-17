@@ -1,7 +1,8 @@
 <?php
 namespace objects;
+require_once("ObjectInterface.php");
 
-class D implements ObjectInterface
+class D 
 {
     public static function Hello(){
         echo "Hello wooow! D";

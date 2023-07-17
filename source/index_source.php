@@ -15,11 +15,9 @@
 
 
     
-    $a = new A;
-    $a->Get("Vason");
 
-    $a = new A;
-    $a->Get("Vason");
+
+
 
     echo $_SERVER['REMOTE_ADDR'];
 ?>
