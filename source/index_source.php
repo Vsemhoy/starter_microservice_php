@@ -9,6 +9,29 @@
     {
         http_response_code(400); exit;
     }
+
+    function GetTypeByName(string $type)
+    {
+        $class = "objects\\" . ucfirst($type);
+        $object = new $class();
+        return $object;
+    };
+
+    function BuildObject(object $object, $instance)
+    {
+        foreach($instance AS $key => $value)
+        {
+          if (isset($object[$key]))
+          {
+            $instance[$key] = $object[$key];
+          } else {
+            unset($instance[$key]);
+          }
+        }
+        return $instance;
+    };
+
+
     
     echo uniqid();
     echo "<br>";
@@ -26,7 +49,12 @@
 
     echo $_SERVER['REMOTE_ADDR'];
 
+
     $evt = Event::CreateTableQueryText();
+    DB::CreateTable($evt);
+    $evt = Category::CreateTableQueryText();
+    DB::CreateTable($evt);
+    $evt = Section::CreateTableQueryText();
     DB::CreateTable($evt);
 
 
@@ -35,6 +63,9 @@
     echo DB::WriteObject($event);
 
     echo $event->Name();
+    echo "<br>";
+    echo "<br>";
+    print_r(DB::GetRows("event", "user", 7));
 
     // `page_ID` INT AUTO_INCREMENT NOT NULL,
     // `url` varchar(200) NOT NULL,

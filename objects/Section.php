@@ -2,26 +2,22 @@
 namespace objects;
 require_once("ObjectInterface.php");
 
-class Event implements ObjectInterface
+class Section implements ObjectInterface
 {
     // define service prefix for ID (each device or application has specified id)
     const PREFIX = "w_";
 
     public string $id;
-    public string $parent;
     public string $title;
+    public string $color;
     public string $content;
-    public string $section;
-    public string $category;
 
     public int $user;
-    public string $client;
     
     public int $locked;
     public int $access;
     public int $status;
-    public int $starred;
-    public int $pinned;
+    public int $ordered;
     
     public string $created_at;
     public string $updated_at;
@@ -40,24 +36,20 @@ class Event implements ObjectInterface
         } else {
             $this->title = $title;
         };
-
         $dt = date("Y-m-d H:i:s");
         if (mb_strlen($title) < 1){
             $this->title = $dt;
         }
-        $this->parent = "";
+
+        $this->color = "";
         $this->content = "";
-        $this->section = "";
-        $this->category = "";
     
         $this->user = $user;
-        $this->client = "";
 
         $this->locked  = 0;
         $this->access  = 1;
         $this->status  = 1;
-        $this->starred = 0;
-        $this->pinned  = 0;
+        $this->ordered = 0;
 
         $this->created_at = $dt;
         $this->updated_at = $dt;
@@ -72,20 +64,16 @@ class Event implements ObjectInterface
     public static function CreateTableQueryText() : string 
     {
         $text = "
-        CREATE TABLE IF NOT EXISTS `event` (
+        CREATE TABLE IF NOT EXISTS `section` (
             `id` CHAR(26) NOT NULL,
-            `parent` CHAR(26),
             `title` VARCHAR(200) NOT NULL,
-            `section` CHAR(26),
-            `category` CHAR(26),
+            `color` VARCHAR(8),
             `user` INT UNSIGNED,
-            `client` VARCHAR(120),
-            `content` TEXT,
+            `content` VARCHAR(1000),
             `locked` INT DEFAULT 0,
             `access` INT DEFAULT 1,
             `status` INT DEFAULT 0,
-            `starred` INT DEFAULT 0,
-            `pinned` INT DEFAULT 0,
+            `ordered` INT DEFAULT 0,
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`)) 
