@@ -85,4 +85,109 @@ class DB
         return $result;
     }
 
+
+    public static function CreateTable($query)
+    {
+        $db = DB::GetPdo();
+        $do = $db->query($query);
+    }
+
+
+    public static function CheckFreeId(string $table, string $id) : bool
+    {
+        // if object with this id is not found, return true
+        $db = DB::GetPdo();
+        $stmt = $db->prepare("SELECT `id` FROM $table WHERE `id` = :id");
+        // Bind the parameter
+        $stmt->bindParam(':id', $id);
+        // Execute the query
+        $stmt->execute();
+        // Fetch the row
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            return false;
+        }
+            return true;
+    }
+
+
+    public static function WriteObject($object, bool $unsetStamps = true) 
+    {
+        if ($unsetStamps)
+        {
+            if (isset($object->created_at)){
+                unset($object->created_at);
+            };
+            if (isset($object->updated_at)){
+                unset($object->updated_at);
+            };
+        };
+        $table = strtolower($object->Name());
+
+        $limit = 12;
+        while(!DB::CheckFreeId($table, $object->id))
+        {
+            $limit--;
+            if ($limit == 0){
+                return false;
+            }
+            $object->FreshId();
+        }
+
+        $columns = implode('`, `', array_keys((array) $object));
+        $placeholders = ':' . implode(', :', array_keys((array) $object));
+        $query = "INSERT INTO `$table` (`$columns`) VALUES ($placeholders)";
+
+        try {
+            $pdo = DB::GetPdo();
+            $stmt = $pdo->prepare($query);
+
+            // Bind the values from the object's properties to the placeholders
+            foreach ($object AS $key => $value)
+            {
+                $stmt->bindValue(':'.$key, $value);
+            }
+
+            // Execute the INSERT statement
+            $stmt->execute();
+            return true; // Success, return true
+        } catch (PDOException $e) {
+            // If there's an exception (error), catch it and return false
+            return false;
+        }
+        return true;
+    }
+
+
+    public static function GetSingleRow(string $table, string $id)
+    {
+        $db = DB::GetPdo();
+        $stmt = $db->prepare("SELECT * FROM $table WHERE `id` = :id");
+        // Bind the parameter
+        $stmt->bindParam(':id', $id);
+        // Execute the query
+        $stmt->execute();
+        // Fetch the row
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            return $row;
+        }
+            return false;
+    }
+
+    public static function GetRows(string $table, string $param, string $value)
+    {
+        $db = DB::GetPdo();
+        $stmt = $db->prepare("SELECT * FROM $table WHERE `$param` = :value");
+        // Bind the parameter
+        $stmt->bindParam(':value', $value);
+        // Execute the query
+        $stmt->execute();
+        // Fetch the row
+        $row = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if ($row) {
+            return $row;
+        }
+            return false;
+    }
 }
