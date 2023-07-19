@@ -103,7 +103,8 @@
         print_r($response);
         return;
       }
-      array_push($tasks, $task->Simplify());
+      //array_push($tasks, $task->Simplify());
+      array_push($tasks, $task);
     };
 
 

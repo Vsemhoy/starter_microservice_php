@@ -6,11 +6,14 @@ class Event implements ObjectInterface
 {
     // define service prefix for ID (each device or application has specified id)
     const PREFIX = "w_";
+    const FORMAT_TEXT = 0;
+    const FORMAT_HTML = 1;
 
     public string $id;
     public string $parent;
     public string $title;
     public string $content;
+    public int    $format;
     public string $section;
     public string $category;
 
@@ -22,6 +25,7 @@ class Event implements ObjectInterface
     public int $status;
     public int $starred;
     public int $pinned;
+    public string $location;
     
     public string $setdate;
     public string $created_at;
@@ -46,23 +50,26 @@ class Event implements ObjectInterface
         if (mb_strlen($title) < 1){
             $this->title = $dt;
         }
-        $this->parent = "";
-        $this->content = "";
-        $this->section = "";
+        $this->parent   = "";
+        $this->content  = "";
+        $this->format   = 0;
+        $this->section  = "";
         $this->category = "";
     
-        $this->user = $user;
-        $this->client = "";
+        $this->user     = $user;
+        $this->client   = "";
 
-        $this->locked  = 0;
-        $this->access  = 1;
-        $this->status  = 1;
-        $this->starred = 0;
-        $this->pinned  = 0;
+        $this->locked   = 0;
+        $this->access   = 1;
+        $this->status   = 1;
+        $this->starred  = 0;
+        $this->pinned   = 0;
 
-        $this->setdate = date("Y-m-d");
+        $this->setdate  = date("Y-m-d");
         $this->created_at = $dt;
         $this->updated_at = $dt;
+
+        $this->location  = "";
     }
 
     // Get new unique ID
@@ -83,11 +90,13 @@ class Event implements ObjectInterface
             `user` INT UNSIGNED,
             `client` VARCHAR(120),
             `content` TEXT,
+            `format` INT DEFAULT 0,
             `locked` INT DEFAULT 0,
             `access` INT DEFAULT 1,
             `status` INT DEFAULT 0,
             `starred` INT DEFAULT 0,
             `pinned` INT DEFAULT 0,
+            `location` VARCHAR(50),
             `setdate` DATE,
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
