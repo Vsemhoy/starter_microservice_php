@@ -23,6 +23,7 @@ class Event implements ObjectInterface
     public int $starred;
     public int $pinned;
     
+    public string $setdate;
     public string $created_at;
     public string $updated_at;
     
@@ -59,6 +60,7 @@ class Event implements ObjectInterface
         $this->starred = 0;
         $this->pinned  = 0;
 
+        $this->setdate = date("Y-m-d");
         $this->created_at = $dt;
         $this->updated_at = $dt;
     }
@@ -86,6 +88,7 @@ class Event implements ObjectInterface
             `status` INT DEFAULT 0,
             `starred` INT DEFAULT 0,
             `pinned` INT DEFAULT 0,
+            `setdate` DATE,
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`)) 

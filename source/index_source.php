@@ -10,6 +10,9 @@
         http_response_code(400); exit;
     }
 
+    $input = file_get_contents('php://input');
+    $inputObj = json_decode($input);
+
     function GetTypeByName(string $type)
     {
         $class = "objects\\" . ucfirst($type);
@@ -31,6 +34,66 @@
         return $instance;
     };
 
+    // Handle format errors
+    if (!isset($inputObj->user))
+    {
+        $response = new Response();
+        $response->status = 1;
+        $response->message = "There is no user section detected!";
+        print_r($response);
+        return;
+    };
+
+    if (!isset($inputObj->tasks))
+    {
+        $response = new Response();
+        $response->status = 1;
+        $response->message = "There is no task section detected!";
+        if (!isset($inputObj->user)){
+            $response->user = (int)$inputObj->user;
+        }
+        print_r($response);
+        return;
+    };
+
+    if (is_array($inputObj->tasks) && count($inputObj->tasks) == 0)
+    {
+        $response = new Response();
+        $response->status = 1;
+        $response->message = "There is no one task detected!";
+        if (!isset($inputObj->user)){
+            $response->user = (int)$inputObj->user;
+        }
+        print_r($response);
+        return;
+    };
+
+
+    $tasks = [];
+    foreach($inputObj->tasks AS $taskObject)
+    {
+      $task = Task::TaskFromObject($taskObject, (int)$inputObj->user);
+      if (is_string($task))
+      {
+        $response = new Response();
+        $response->status = 1;
+        $response->message = "The problem with task definition: " . $task ;
+        if (!isset($inputObj->user)){
+            $response->user = (int)$inputObj->user;
+        }
+        print_r($response);
+        return;
+      }
+      array_push($tasks, $task->Simplify());
+    };
+
+
+    print_r($tasks);
+    
+    echo "<br>";
+    echo $inputObj->user;
+
+    return;
 
     
     echo uniqid();
