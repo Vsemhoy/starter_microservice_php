@@ -25,6 +25,7 @@ class Event implements ObjectInterface
     public int $status;
     public int $starred;
     public int $pinned;
+    public int $importance;
     public string $location;
     
     public string $setdate;
@@ -50,22 +51,23 @@ class Event implements ObjectInterface
         if (mb_strlen($title) < 1){
             $this->title = $dt;
         }
-        $this->parent   = "";
-        $this->content  = "";
-        $this->format   = 0;
-        $this->section  = "";
-        $this->category = "";
-    
-        $this->user     = $user;
-        $this->client   = "";
+        $this->parent     = "";
+        $this->content    = "";
+        $this->format     = 0;
+        $this->section    = "";
+        $this->category   = "";
+      
+        $this->user       = $user;
+        $this->client     = "";
+  
+        $this->locked     = 0;
+        $this->access     = 1;
+        $this->status     = 1;
+        $this->starred    = 0;
+        $this->pinned     = 0;
+        $this->importance = 2;
 
-        $this->locked   = 0;
-        $this->access   = 1;
-        $this->status   = 1;
-        $this->starred  = 0;
-        $this->pinned   = 0;
-
-        $this->setdate  = date("Y-m-d");
+        $this->setdate    = date("Y-m-d");
         $this->created_at = $dt;
         $this->updated_at = $dt;
 
@@ -96,6 +98,7 @@ class Event implements ObjectInterface
             `status` INT DEFAULT 0,
             `starred` INT DEFAULT 0,
             `pinned` INT DEFAULT 0,
+            `importance` INT DEFAULT 2,
             `location` VARCHAR(50),
             `setdate` DATE,
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
