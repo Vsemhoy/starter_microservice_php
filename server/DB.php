@@ -190,4 +190,61 @@ class DB
         }
             return false;
     }
+
+
+    public static function GetRows(string $table, array $where = [], int $limit = 0, int $offset = 0, string $order = '')
+    {
+        $db = DB::GetPdo();
+
+        $whereClause = '';
+        if (!empty($where)) {
+            $whereClause = 'WHERE ';
+            $conditions = [];
+            foreach ($where as $condition) {
+                $column = $condition->column;
+                $operator = $condition->operator;
+                $value = $condition->value;
+                $conditions[] = "`$column` $operator :$column";
+            }
+            $whereClause .= implode(' AND ', $conditions);
+        }
+
+        $limitClause = '';
+        if ($limit > 0) {
+            $limitClause = "LIMIT $limit";
+            if ($offset > 0) {
+                $limitClause .= " OFFSET $offset";
+            }
+        }
+
+        $orderClause = '';
+        if (!empty($order)) {
+            $orderClause = "ORDER BY $order";
+        }
+
+        $query = "SELECT * FROM `$table` $whereClause $orderClause $limitClause";
+
+        $stmt = $db->prepare($query);
+
+        // Bind the parameters for the WHERE conditions
+        foreach ($where as $condition) {
+            $column = $condition->column;
+            $value = $condition->value;
+            $stmt->bindParam(":$column", $value);
+        }
+
+        // Execute the query
+        $stmt->execute();
+
+        // Fetch the rows
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if ($rows) {
+            return $rows;
+        }
+
+        return false;
+    }
+
+    
 }
