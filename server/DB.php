@@ -192,6 +192,8 @@ class DB
     }
 
 
+
+    
     public static function GetRows($task)
     {
          $table   = strtolower($task->type);

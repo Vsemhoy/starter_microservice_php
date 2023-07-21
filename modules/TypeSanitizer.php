@@ -20,6 +20,35 @@ class TypeSanitizer
         return $object;
     }
 
+    public static function rebuildAndSanitizeObjectFromStd($object, $rawObj)
+    {
+        $class = get_class($object);
+        if (property_exists($class, 'sanitize_map')) {
+            $sanitizeMap = $class::$sanitize_map;
+            $format = 0;
+            foreach ($sanitizeMap as $field => $type) {
+                if (property_exists($rawObj, $field)) {
+                    $value = $rawObj->{$field};
+                    if ($field == "content"){
+                        if ($format == 0){
+                            $type = 'string';
+                        } else if ($format == 1) {
+                            $type = 'html';
+                        }
+                    }
+                    $result = self::sanitizeField($value, $type);
+                    if ($field == "format"){
+                        $format = $result;
+                    }
+                    
+                    $object->{$field} = $result;
+                }
+            }
+        }
+
+        return $object;
+    }
+
     public static function sanitizeField($value, string $type)
     {
         $type = strtolower($type);
@@ -84,11 +113,12 @@ class TypeSanitizer
 
             case 'date':
                 $parsedDate = date_parse($value);
+                $datestring = "";
                 if (!$parsedDate || $parsedDate['error_count'] > 0) {
                     // Handle validation error (e.g., return an error message or log it)
-                    $parsedDate = date("Y-m-d");
+                    return date("Y-m-d");
                 }
-                return $parsedDate;
+                $datestring = sprintf("%04d-%02d-%02d", $parsedDate['year'], $parsedDate['month'], $parsedDate['day']);
                 break;
 
             case 'name':

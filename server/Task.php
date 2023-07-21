@@ -32,7 +32,7 @@ class Task
         int    $user,
         int    $action, 
         string $type,
-        array  $objcts      = [],
+        array  $objects      = [],
         array  $where       = [],
         int    $order       = 0,
         string $setKey      = "",
@@ -47,7 +47,7 @@ class Task
         $this->user        = $user;
         $this->action      = $action;
         $this->type        = $type;
-        $this->objects     = $objcts;
+        $this->objects     = $objects;
         $this->where       = $where;
         $this->order       = $order;
         $this->limit       = $limit;

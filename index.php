@@ -37,9 +37,6 @@
     function getTypeByName(string $type)
     {
         $class = "objects\\" . ucfirst($type);
-        if (!class_exists(getTypeByName($class))) {
-            return null;
-        }
         $object = new $class();
         return $object;
     };
@@ -48,11 +45,11 @@
     {
         foreach($instance AS $key => $value)
         {
-          if (isset($object[$key]))
+          if (isset($object->$key))
           {
-            $instance[$key] = $object[$key];
+            $instance->$key = $object->$key;
           } else {
-            unset($instance[$key]);
+            unset($instance->$key);
           }
         }
         return $instance;
@@ -104,6 +101,7 @@
         $response = new Response();
         $response->status = 1;
         $response->message = "The problem with task definition: " . $task ;
+        $response->objects = $inputObj->tasks;
         if (!isset($inputObj->user)){
             $response->user = (int)$inputObj->user;
         }
@@ -114,51 +112,68 @@
     };
 
 
+    $response = new Response();
+
     // Handle the tasks
     foreach ($tasks AS $task)
     {
         if (!isset($task->action)){ continue; }
+
         $task->type = ucfirst(TypeSanitizer::sanitizeField( $task->type, 'name'));
         $class = "objects\\" . ucfirst($task->type);
         $task->map = $class::getSanitizeMap();
-        
+
         if (is_array($task->where))
         {
-          foreach($task->where AS $tv)
-          {
-            $wh = Task::Where();
-            $wh->column   = TypeSanitizer::sanitizeField( $tv->column, 'name');
-            $wh->value    = TypeSanitizer::sanitizeField( $tv->value, 'string');
-            if (!isset($tv->operator) || $tv->operator == ""){
+            foreach($task->where AS $tv)
+            {
+                $wh = Task::Where();
+                $wh->column   = TypeSanitizer::sanitizeField( $tv->column, 'name');
+                $wh->value    = TypeSanitizer::sanitizeField( $tv->value, 'string');
+                if (!isset($tv->operator) || $tv->operator == ""){
                     $wh->operator = "=";
-                  } else {
+                } else {
                     $wh->operator = TypeSanitizer::sanitizeField( $tv->operator, 'operator');
-                  }
-                  $tv = $wh;
-                };
-              };
-              
-              switch ($task->action) {
-                case 1:
-              //    echo "PIZDEC";
-                  $rowData = DB::getRows($task);
-                  if ($rowData == false){
-                      break; 
-                    };
-                  $task->results = $rowData;
-                
+                }
+                $tv = $wh;
+            };
+        };
+
+        switch ($task->action) {
+            // Select read
+            case 1:
+                $rowData = DB::getRows($task);
+                if ($rowData == false){ break; };
+                $task->results = $rowData;
+                $task->Simplify();
+                break;
+
+                // Write new entity
+            case 3:
+                $newObjects = [];
+                foreach ($task->objects AS $oldObj){
+                    $newObj = getTypeByName($task->type);
+                    // prepare to store into db
+                    $objNn = TypeSanitizer::rebuildAndSanitizeObjectFromStd($newObj, $oldObj);
+                    array_push($newObjects, $objNn);
+                }
+                $task->objects = $newObjects;
+                // $rowData = DB::getRows($task);
+                // if ($rowData == false){ break; };
+                $task->results = $newObjects;
+                //$task->Simplify();
                 break;
         }
-
-
+        array_push( $response->results, $task);
+        
     }
 
-    print_r($tasks);
+    print_r($response);
     
+    return;
     echo "<br>";
     echo $inputObj->user;
 
-    return;
 
     
     echo uniqid();
