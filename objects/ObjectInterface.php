@@ -2,7 +2,7 @@
 namespace objects;
     interface ObjectInterface
     {
-        public static function CreateTableQueryText();
+        public static function createTableQueryText();
         /// Update Id to new generated
         public function FreshId();
         /// Get name of the class type

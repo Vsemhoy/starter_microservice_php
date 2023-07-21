@@ -61,7 +61,7 @@ class Section implements ObjectInterface
         $this->id = uniqid(self::PREFIX, true);
     }
 
-    public static function CreateTableQueryText() : string 
+    public static function createTableQueryText() : string 
     {
         $text = "
         CREATE TABLE IF NOT EXISTS `section` (
@@ -70,9 +70,9 @@ class Section implements ObjectInterface
             `color` VARCHAR(8),
             `user` INT UNSIGNED,
             `content` VARCHAR(1000),
-            `locked` INT DEFAULT 0,
-            `access` INT DEFAULT 1,
-            `status` INT DEFAULT 0,
+            `locked` TINYINT DEFAULT 0,
+            `access` TINYINT DEFAULT 1,
+            `status` TINYINT DEFAULT 0,
             `ordered` INT DEFAULT 0,
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -81,6 +81,35 @@ class Section implements ObjectInterface
             ";
             return $text;
     }
+
+    public static function getSanitizeMap()
+    {
+        $map = [
+            'title'   => 'title',
+            'color'   => 'string',
+            'content' => 'string',
+            'user'    => 'int',
+            'locked'  => 'int',
+            'access'  => 'int',
+            'status'  => 'int',
+            'ordered' => 'int',
+        ];
+        return $map;
+    }
+
+    public static function getStringLimit($key)
+    {
+        $lim = [
+            'title'   => 190,
+            'color'   => 8,
+            'content' => 1000
+        ];
+        if (isset($lim[$key])){
+            return $lim[$key];
+        } 
+        return 0;
+    }
+
 
     public function Name()
     {

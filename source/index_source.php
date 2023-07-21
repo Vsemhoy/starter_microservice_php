@@ -13,22 +13,22 @@
     $input = file_get_contents('php://input');
     $inputObj = json_decode($input);
 
-    function GetTypeByName(string $type)
+    function getTypeByName(string $type)
     {
         $class = "objects\\" . ucfirst($type);
         $object = new $class();
         return $object;
     };
 
-    function BuildObject(object $object, $instance)
+    function buildObject(object $object, $instance)
     {
         foreach($instance AS $key => $value)
         {
-          if (isset($object[$key]))
+          if (isset($object->$key))
           {
-            $instance[$key] = $object[$key];
+            $instance->$key = $object->$key;
           } else {
-            unset($instance[$key]);
+            unset($instance->$key);
           }
         }
         return $instance;
@@ -69,31 +69,90 @@
     };
 
 
+    // *
+    // Collect received tasks into array 
     $tasks = [];
     foreach($inputObj->tasks AS $taskObject)
     {
-      $task = Task::TaskFromObject($taskObject, (int)$inputObj->user);
+      $task = Task::taskFromObject($taskObject, (int)$inputObj->user);
       if (is_string($task))
       {
         $response = new Response();
         $response->status = 1;
         $response->message = "The problem with task definition: " . $task ;
+        $response->objects = $inputObj->tasks;
         if (!isset($inputObj->user)){
             $response->user = (int)$inputObj->user;
         }
         print_r($response);
         return;
       }
-      array_push($tasks, $task->Simplify());
+      array_push($tasks, $task);
     };
 
 
-    print_r($tasks);
+    $response = new Response();
+
+    // Handle the tasks
+    foreach ($tasks AS $task)
+    {
+        if (!isset($task->action)){ continue; }
+
+        $task->type = ucfirst(TypeSanitizer::sanitizeField( $task->type, 'name'));
+        $class = "objects\\" . ucfirst($task->type);
+        $task->map = $class::getSanitizeMap();
+
+        if (is_array($task->where))
+        {
+            foreach($task->where AS $tv)
+            {
+                $wh = Task::Where();
+                $wh->column   = TypeSanitizer::sanitizeField( $tv->column, 'name');
+                $wh->value    = TypeSanitizer::sanitizeField( $tv->value, 'string');
+                if (!isset($tv->operator) || $tv->operator == ""){
+                    $wh->operator = "=";
+                } else {
+                    $wh->operator = TypeSanitizer::sanitizeField( $tv->operator, 'operator');
+                }
+                $tv = $wh;
+            };
+        };
+
+        switch ($task->action) {
+            // Select read
+            case 1:
+                $rowData = DB::getRows($task);
+                if ($rowData == false){ break; };
+                $task->results = $rowData;
+                $task->Simplify();
+                break;
+
+                // Write new entity
+            case 3:
+                $newObjects = [];
+                foreach ($task->objects AS $oldObj){
+                    $newObj = getTypeByName($task->type);
+                    // prepare to store into db
+                    $objNn = TypeSanitizer::rebuildAndSanitizeObjectFromStd($newObj, $oldObj);
+                    array_push($newObjects, $objNn);
+                }
+                $task->objects = $newObjects;
+                // $rowData = DB::getRows($task);
+                // if ($rowData == false){ break; };
+                $task->results = $newObjects;
+                //$task->Simplify();
+                break;
+        }
+        array_push( $response->results, $task);
+        
+    }
+
+    print_r($response);
     
+    return;
     echo "<br>";
     echo $inputObj->user;
 
-    return;
 
     
     echo uniqid();
@@ -113,17 +172,17 @@
     echo $_SERVER['REMOTE_ADDR'];
 
 
-    $evt = Event::CreateTableQueryText();
-    DB::CreateTable($evt);
-    $evt = Category::CreateTableQueryText();
-    DB::CreateTable($evt);
-    $evt = Section::CreateTableQueryText();
-    DB::CreateTable($evt);
+    $evt = Event::createTableQueryText();
+    DB::createTable($evt);
+    $evt = Category::createTableQueryText();
+    DB::createTable($evt);
+    $evt = Section::createTableQueryText();
+    DB::createTable($evt);
 
 
     $event = new Event("The name of second... ZZZ", 7);
     print_r($event);
-    echo DB::WriteObject($event);
+    echo DB::writeObject($event);
 
     echo $event->Name();
     echo "<br>";

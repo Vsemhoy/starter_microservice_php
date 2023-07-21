@@ -86,7 +86,7 @@ class DB
     }
 
 
-    public static function CreateTable($query)
+    public static function createTable($query)
     {
         $db = DB::GetPdo();
         $do = $db->query($query);
@@ -111,7 +111,7 @@ class DB
     }
 
 
-    public static function WriteObject($object, bool $unsetStamps = true) 
+    public static function writeObject($object, bool $unsetStamps = true) 
     {
         if ($unsetStamps)
         {
@@ -175,7 +175,7 @@ class DB
             return false;
     }
 
-    public static function GetRows(string $table, string $param, string $value)
+    public static function GetRowsSimple(string $table, string $param, string $value)
     {
         $db = DB::GetPdo();
         $stmt = $db->prepare("SELECT * FROM $table WHERE `$param` = :value");
@@ -192,13 +192,73 @@ class DB
     }
 
 
-    public static function GetRows(string $table, array $where = [], int $limit = 0, int $offset = 0, string $order = '')
+    public static function GetRows($task)
     {
+         $table   = strtolower($task->type);
+         $where   = $task->where;
+         $limit   = $task->limit;
+         $offset  = $task->offset;
+         $order   = $task->order;
+        // Check if User can access the data only if Table contains "access" column
+        if (isset($task->map['access'])) {
+            $accessConditions = [];
+            $hasAccess = false;
+            $userMatch = false;
+            foreach ($where as $taskwhere) {
+                if (isset($taskwhere->column) && $taskwhere->column === "user") {
+                    if ($taskwhere->value == $task->user) {
+                        $userMatch = true;
+                    } else {
+                        // Add access condition only if the user does not match
+                        $accessCondition = (object) [
+                            'column' => 'access',
+                            'value' => '3', // Modify this value as needed
+                            'operator' => '=',
+                        ];
+                        $accessConditions[] = $accessCondition;
+                    }
+                }
+                if (isset($taskwhere->column) && $taskwhere->column === "access") {
+                    $hasAccess = true;
+                }
+            }
+    
+            if (!$userMatch && $hasAccess) {
+                $modifiedAccessConditions = [];
+                foreach ($where as $taskwhere) {
+                    if (isset($taskwhere->column) && $taskwhere->column === "access") {
+                        $modifiedAccessCondition = (object) [
+                            'column' => 'access',
+                            'value' => '3',
+                            'operator' => '=',
+                        ];
+                        $modifiedAccessConditions[] = $modifiedAccessCondition;
+                    } else {
+                        $modifiedAccessConditions[] = $taskwhere;
+                    }
+                }
+                $where = $modifiedAccessConditions;
+            }
+    
+            if (!$userMatch && count($accessConditions) === 0 && !$hasAccess) {
+                // Add default access condition if the user condition was not found
+                $accessCondition = (object) [
+                    'column' => 'access',
+                    'value' => '3', // Modify this value as needed
+                    'operator' => '=',
+                ];
+                $accessConditions[] = $accessCondition;
+            }
+    
+            // Merge access conditions with the original where array
+            $where = array_merge($where, $accessConditions);
+        }
+
         $db = DB::GetPdo();
 
         $whereClause = '';
         if (!empty($where)) {
-            $whereClause = 'WHERE ';
+            $whereClause = 'WHERE (';
             $conditions = [];
             foreach ($where as $condition) {
                 $column = $condition->column;
@@ -207,6 +267,9 @@ class DB
                 $conditions[] = "`$column` $operator :$column";
             }
             $whereClause .= implode(' AND ', $conditions);
+        }
+        if ($whereClause != ''){
+            $whereClause = $whereClause . ")";
         }
 
         $limitClause = '';
@@ -221,20 +284,27 @@ class DB
         if (!empty($order)) {
             $orderClause = "ORDER BY $order";
         }
-
         $query = "SELECT * FROM `$table` $whereClause $orderClause $limitClause";
+        echo $query;
 
         $stmt = $db->prepare($query);
 
+        $newCon = [];
         // Bind the parameters for the WHERE conditions
         foreach ($where as $condition) {
             $column = $condition->column;
             $value = $condition->value;
-            $stmt->bindParam(":$column", $value);
+            if (is_float($value)){
+                $value = (float)$value;
+            } else
+            if (is_numeric($value)){
+                $value = (int)$value;
+            }
+            $newCon[$column] = $value;
         }
-
+        
         // Execute the query
-        $stmt->execute();
+        $stmt->execute($newCon);
 
         // Fetch the rows
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -246,5 +316,5 @@ class DB
         return false;
     }
 
-    
+
 }

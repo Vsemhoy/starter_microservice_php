@@ -25,6 +25,8 @@ class Task
     public string $setKey;      // if result should be an associative array, set array key
     public array  $postActions; // array of customer specified actions to do after main handle 
     public array  $results;
+    public array  $map;
+    public array  $lim;
     
     public function __construct(
         int    $user,
@@ -37,7 +39,9 @@ class Task
         int    $limit       = 0,
         int    $offset      = 0,
         array  $postActions = [],
-        array  $results     = []
+        array  $results     = [],
+        array  $map         = [],
+        array  $lim         = [],
         )
     {
         $this->user        = $user;
@@ -51,6 +55,9 @@ class Task
         $this->offset      = $offset;
         $this->postActions = $postActions;
         $this->results     = $results;
+        $this->map         = $map;
+        $this->lim         = $lim;
+
     }
 
     public static function Where()
@@ -62,7 +69,7 @@ class Task
         return $obj;
     }
 
-    public static function TaskFromObject($obj, $user = 0)
+    public static function taskFromObject($obj, $user = 0)
     {
         if (!isset($obj->action)){ return "There is no action detected!"; };
         if (!isset($obj->type)){   return "There is no type definition detected!"; };
@@ -92,7 +99,7 @@ class Task
         return $task;
     }
 
-    public function Simplify()
+    public function simplify()
     {
         unset($this->objects);     
         unset($this->where);      
@@ -101,6 +108,8 @@ class Task
         unset($this->offset);
         unset($this->setKey);      
         unset($this->postActions);
+        // unset($this->map);
+        // unset($this->lim);
         return $this;
     }
 }

@@ -67,7 +67,7 @@ class Category implements ObjectInterface
           $this->id = uniqid(self::PREFIX, true);
       }
   
-      public static function CreateTableQueryText() : string 
+      public static function createTableQueryText() : string 
       {
           $text = "
           CREATE TABLE IF NOT EXISTS `category` (
@@ -76,12 +76,12 @@ class Category implements ObjectInterface
               `color` VARCHAR(8),
               `user` INT UNSIGNED,
               `content` VARCHAR(1000),
-              `locked` INT DEFAULT 0,
-              `events` INT DEFAULT 0,
-              `status` INT DEFAULT 0,
+              `locked` TINYINT DEFAULT 0,
+              `events` TINYINT DEFAULT 0,
+              `status` TINYINT DEFAULT 0,
               `ordered` INT DEFAULT 0,
               `parent` CHAR(26),
-              `level` INT DEFAULT 0,  
+              `level` UNSIGNED TINYINT DEFAULT 0,  
               `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
               `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
               PRIMARY KEY (`id`)) 
@@ -90,6 +90,39 @@ class Category implements ObjectInterface
               return $text;
       }
   
+      public static function getStringLimit($key)
+      {
+          $lim = [
+              'title'    => 190,
+              'color'    => 8,
+              'content'  => 1000
+          ];
+          if (isset($lim[$key])){
+              return $lim[$key];
+          } 
+          return 0;
+      }
+  
+      public static function getSanitizeMap()
+      {
+          $map = [
+            'id'         => 'string',
+            'title'      => 'title',
+            'color'      => 'string',
+            'user'       => 'int',
+            'content'    => 'string',
+            'locked'     => 'int',
+            'events'     => 'int',
+            'status'     => 'int',
+            'ordered'    => 'int',
+            'parent'     => 'string',
+            'level'      => 'int',
+            'created_at' => 'datetime', // Assuming date is passed as a string
+            'updated_at' => 'datetime', // Assuming date is passed as a string
+          ];
+          return $map;
+      }
+
       public function Name()
       {
           $name = get_class($this);

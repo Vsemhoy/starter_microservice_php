@@ -3,7 +3,7 @@
   require_once('C:\OSPanel\domains\microservice\objects\Category.php');
   require_once('C:\OSPanel\domains\microservice\objects\Event.php');
   require_once('C:\OSPanel\domains\microservice\objects\Section.php');
-  require_once('C:\OSPanel\domains\microservice\controller\BaseController.php');
+  require_once('C:\OSPanel\domains\microservice\modules\TypeSanitizer.php');
   require_once('C:\OSPanel\domains\microservice\server\DB.php');
   require_once('C:\OSPanel\domains\microservice\server\Host.php');
   require_once('C:\OSPanel\domains\microservice\server\Response.php');
@@ -12,7 +12,7 @@
   use objects\Category;
   use objects\Event;
   use objects\Section;
-  use controller\BaseController;
+  use modules\TypeSanitizer;
   use server\DB;
   use server\Host;
   use server\Response;
@@ -30,15 +30,21 @@
     {
         http_response_code(400); exit;
     }
-    
-    function GetTypeByName(string $type)
+
+    $input = file_get_contents('php://input');
+    $inputObj = json_decode($input);
+
+    function getTypeByName(string $type)
     {
         $class = "objects\\" . ucfirst($type);
+        if (!class_exists(getTypeByName($class))) {
+            return null;
+        }
         $object = new $class();
         return $object;
     };
 
-    function BuildObject(object $object, $instance)
+    function buildObject(object $object, $instance)
     {
         foreach($instance AS $key => $value)
         {
@@ -49,11 +55,10 @@
             unset($instance[$key]);
           }
         }
-    }
+        return $instance;
+    };
 
-    $input = $entityBody = file_get_contents('php://input');
-    $inputObj = json_decode($input);
-
+    // Handle format errors
     if (!isset($inputObj->user))
     {
         $response = new Response();
@@ -62,7 +67,7 @@
         print_r($response);
         return;
     };
-    
+
     if (!isset($inputObj->tasks))
     {
         $response = new Response();
@@ -87,11 +92,13 @@
         return;
     };
 
-    
+
+    // *
+    // Collect received tasks into array 
     $tasks = [];
     foreach($inputObj->tasks AS $taskObject)
     {
-      $task = Task::TaskFromObject($taskObject, (int)$inputObj->user);
+      $task = Task::taskFromObject($taskObject, (int)$inputObj->user);
       if (is_string($task))
       {
         $response = new Response();
@@ -103,22 +110,60 @@
         print_r($response);
         return;
       }
-      //array_push($tasks, $task->Simplify());
       array_push($tasks, $task);
     };
 
 
+    // Handle the tasks
+    foreach ($tasks AS $task)
+    {
+        if (!isset($task->action)){ continue; }
+        $task->type = ucfirst(TypeSanitizer::sanitizeField( $task->type, 'name'));
+        $class = "objects\\" . ucfirst($task->type);
+        $task->map = $class::getSanitizeMap();
+        
+        if (is_array($task->where))
+        {
+          foreach($task->where AS $tv)
+          {
+            $wh = Task::Where();
+            $wh->column   = TypeSanitizer::sanitizeField( $tv->column, 'name');
+            $wh->value    = TypeSanitizer::sanitizeField( $tv->value, 'string');
+            if (!isset($tv->operator) || $tv->operator == ""){
+                    $wh->operator = "=";
+                  } else {
+                    $wh->operator = TypeSanitizer::sanitizeField( $tv->operator, 'operator');
+                  }
+                  $tv = $wh;
+                };
+              };
+              
+              switch ($task->action) {
+                case 1:
+              //    echo "PIZDEC";
+                  $rowData = DB::getRows($task);
+                  if ($rowData == false){
+                      break; 
+                    };
+                  $task->results = $rowData;
+                
+                break;
+        }
 
+
+    }
 
     print_r($tasks);
-    return;
+    
     echo "<br>";
     echo $inputObj->user;
 
-    //return;
+    return;
 
+    
+    echo uniqid();
     echo "<br>";
-    print_r(GetTypeByName('event'));
+    echo uniqid('', true);
     echo "<br>";
 
 
@@ -132,16 +177,18 @@
 
     echo $_SERVER['REMOTE_ADDR'];
 
-    $evt = Event::CreateTableQueryText();
-    DB::CreateTable($evt);
-    $evt = Category::CreateTableQueryText();
-    DB::CreateTable($evt);
-    $evt = Section::CreateTableQueryText();
-    DB::CreateTable($evt);
+
+    $evt = Event::createTableQueryText();
+    DB::createTable($evt);
+    $evt = Category::createTableQueryText();
+    DB::createTable($evt);
+    $evt = Section::createTableQueryText();
+    DB::createTable($evt);
+
 
     $event = new Event("The name of second... ZZZ", 7);
     print_r($event);
-    echo DB::WriteObject($event);
+    echo DB::writeObject($event);
 
     echo $event->Name();
     echo "<br>";

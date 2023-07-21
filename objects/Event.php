@@ -80,7 +80,7 @@ class Event implements ObjectInterface
         $this->id = uniqid(self::PREFIX, true);
     }
 
-    public static function CreateTableQueryText() : string 
+    public static function createTableQueryText() : string 
     {
         $text = "
         CREATE TABLE IF NOT EXISTS `event` (
@@ -92,13 +92,13 @@ class Event implements ObjectInterface
             `user` INT UNSIGNED,
             `client` VARCHAR(120),
             `content` TEXT,
-            `format` INT DEFAULT 0,
-            `locked` INT DEFAULT 0,
-            `access` INT DEFAULT 1,
-            `status` INT DEFAULT 0,
-            `starred` INT DEFAULT 0,
-            `pinned` INT DEFAULT 0,
-            `importance` INT DEFAULT 2,
+            `format` UNSIGNED TINYINT DEFAULT 0,
+            `locked` TINYINT DEFAULT 0,
+            `access` TINYINT DEFAULT 1,
+            `status` TINYINT DEFAULT 0,
+            `starred` TINYINT DEFAULT 0,
+            `pinned` TINYINT DEFAULT 0,
+            `importance` UNSIGNED TINYINT DEFAULT 2 CHECK (importance >= 0 AND importance <= 10),
             `location` VARCHAR(50),
             `setdate` DATE,
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -108,6 +108,48 @@ class Event implements ObjectInterface
             ";
             return $text;
     }
+
+    public static function getStringLimit($key)
+    {
+        $lim = [
+            'title'    => 190,
+            'client'   => 120,
+            'content'  => 99000,
+            'location' => 50
+        ];
+        if (isset($lim[$key])){
+            return $lim[$key];
+        } 
+        return 0;
+    }
+
+    public static function getSanitizeMap(){
+        return Event::$sanitize_map;
+    }
+
+    public static array $sanitize_map = [
+            'id'         => 'string',
+            'format'     => 'int', // Format can be always before content
+            'parent'     => 'string',
+            'title'      => 'title',
+            'section'    => 'string',
+            'category'   => 'string',
+            'user'       => 'int',
+            'client'     => 'string',
+            'content'    => 'html',
+            'locked'     => 'int',
+            'access'     => 'int',
+            'status'     => 'int',
+            'starred'    => 'int',
+            'pinned'     => 'int',
+            'importance' => 'int',
+            'location'   => 'json',
+            'setdate'    => 'date', // Assuming date is passed as a string
+            'created_at' => 'datetime', // Assuming date is passed as a string
+            'updated_at' => 'datetime', // Assuming date is passed as a string
+        ];
+
+
 
     public function Name()
     {

@@ -7,7 +7,7 @@
 // 3.3 - write script from source
 
 $loc = __DIR__;
-$dirs = ["objects", "controller", "server", "database"];
+$dirs = ["objects", "modules", "server", "database"];
 
 
 
