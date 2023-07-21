@@ -193,7 +193,7 @@ class DB
 
 
 
-    
+
     public static function GetRows($task)
     {
          $table   = strtolower($task->type);
@@ -266,7 +266,11 @@ class DB
                 $column = $condition->column;
                 $operator = $condition->operator;
                 $value = $condition->value;
-                $conditions[] = "`$column` $operator :$column";
+                if (strtoupper($operator) == "BETWEEN"){
+                    $conditions[] = "`$column` $operator :$column AND :$column" . 2;
+                } else {
+                    $conditions[] = "`$column` $operator :$column";
+                }
             }
             $whereClause .= implode(' AND ', $conditions);
         }
@@ -287,7 +291,6 @@ class DB
             $orderClause = "ORDER BY $order";
         }
         $query = "SELECT * FROM `$table` $whereClause $orderClause $limitClause";
-        echo $query;
 
         $stmt = $db->prepare($query);
 
@@ -296,6 +299,7 @@ class DB
         foreach ($where as $condition) {
             $column = $condition->column;
             $value = $condition->value;
+            $operator = $condition->operator;
             if (is_float($value)){
                 $value = (float)$value;
             } else
@@ -303,6 +307,10 @@ class DB
                 $value = (int)$value;
             }
             $newCon[$column] = $value;
+            echo $operator;
+            if (strtoupper($operator) == "BETWEEN"){
+                $newCon[$column . "2"] = $condition->value2;
+            };
         }
         
         // Execute the query

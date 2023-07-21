@@ -66,6 +66,7 @@ class Task
         $obj->column   = "id";
         $obj->value    = "1";
         $obj->operator = "=";
+        $obj->value2   = "";
         return $obj;
     }
 

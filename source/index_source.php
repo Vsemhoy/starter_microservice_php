@@ -114,6 +114,9 @@
                 } else {
                     $wh->operator = TypeSanitizer::sanitizeField( $tv->operator, 'operator');
                 }
+                if (isset($tv->value2) && $tv->value2 != "" && strtoupper( $wh->operator) == "BETWEEN"){
+                    $wh->value2 = TypeSanitizer::sanitizeField( $tv->value2, 'string');
+                } 
                 $tv = $wh;
             };
         };
@@ -134,9 +137,15 @@
                     $newObj = getTypeByName($task->type);
                     // prepare to store into db
                     $objNn = TypeSanitizer::rebuildAndSanitizeObjectFromStd($newObj, $oldObj);
+                    $objNn->user = (int)$inputObj->user;
                     array_push($newObjects, $objNn);
                 }
-                $task->objects = $newObjects;
+                foreach ($newObjects AS $objectToWrite)
+                {
+                    DB::writeObject($objectToWrite);
+                };
+
+
                 // $rowData = DB::getRows($task);
                 // if ($rowData == false){ break; };
                 $task->results = $newObjects;
