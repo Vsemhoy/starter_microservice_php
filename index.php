@@ -28,7 +28,10 @@
     // Allow access from only approved hosts
     if (!Host::Allowed(Host::CHECKTOKEN))
     {
-        http_response_code(400); exit;
+        //http_response_code(400); exit;
+        header('HTTP/1.1 403 Forbidden');
+        echo 'access denied';
+        exit;
     }
 
     $input = file_get_contents('php://input');
@@ -71,7 +74,7 @@
         $response->status = 1;
         $response->message = "There is no task section detected!";
         if (!isset($inputObj->user)){
-            $response->user = (int)$inputObj->user;
+            $response->user = $inputObj->user;
         }
         print_r($response);
         return;
@@ -95,7 +98,7 @@
     $tasks = [];
     foreach($inputObj->tasks AS $taskObject)
     {
-      $task = Task::taskFromObject($taskObject, (int)$inputObj->user);
+      $task = Task::taskFromObject($taskObject, $inputObj->user);
       if (is_string($task))
       {
         $response = new Response();
@@ -154,10 +157,10 @@
                 // Write new entity
             case 3:
                 $newObjects = [];
-                foreach ($task->objects AS $oldObj){
+                foreach ($task->objects AS $getObj){
                     $newObj = getTypeByName($task->type);
                     // prepare to store into db
-                    $objNn = TypeSanitizer::rebuildAndSanitizeObjectFromStd($newObj, $oldObj);
+                    $objNn = TypeSanitizer::rebuildAndSanitizeObjectFromStd($newObj, $getObj);
                     $objNn->user = (int)$inputObj->user;
                     array_push($newObjects, $objNn);
                 }
@@ -166,6 +169,9 @@
                     DB::writeObject($objectToWrite);
                 };
 
+             // 5 - update entry
+             
+             // 7 - delete rows
 
                 // $rowData = DB::getRows($task);
                 // if ($rowData == false){ break; };

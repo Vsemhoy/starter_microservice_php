@@ -4,7 +4,7 @@ use PDO;
 
 class DB
 {
-    private const dbname = "splmod";
+    private const dbname = "microservicer";
     private const host = "localhost";
     private const dbuser = "root";
     private const dbpass = "";
@@ -207,9 +207,10 @@ class DB
             $hasAccess = false;
             $userMatch = false;
             foreach ($where as $taskwhere) {
-                if (isset($taskwhere->column) && $taskwhere->column === "user") {
+                if (isset($taskwhere->column) && $taskwhere->column == "user") {
                     if ($taskwhere->value == $task->user) {
                         $userMatch = true;
+                        
                     } else {
                         // Add access condition only if the user does not match
                         $accessCondition = (object) [
@@ -220,7 +221,7 @@ class DB
                         $accessConditions[] = $accessCondition;
                     }
                 }
-                if (isset($taskwhere->column) && $taskwhere->column === "access") {
+                if (isset($taskwhere->column) && $taskwhere->column == "access") {
                     $hasAccess = true;
                 }
             }
@@ -228,7 +229,7 @@ class DB
             if (!$userMatch && $hasAccess) {
                 $modifiedAccessConditions = [];
                 foreach ($where as $taskwhere) {
-                    if (isset($taskwhere->column) && $taskwhere->column === "access") {
+                    if (isset($taskwhere->column) && $taskwhere->column == "access") {
                         $modifiedAccessCondition = (object) [
                             'column' => 'access',
                             'value' => '3',
@@ -242,13 +243,14 @@ class DB
                 $where = $modifiedAccessConditions;
             }
     
-            if (!$userMatch && count($accessConditions) === 0 && !$hasAccess) {
+            if (!$userMatch && count($accessConditions) == 0 && !$hasAccess) {
                 // Add default access condition if the user condition was not found
                 $accessCondition = (object) [
                     'column' => 'access',
                     'value' => '3', // Modify this value as needed
                     'operator' => '=',
                 ];
+                
                 $accessConditions[] = $accessCondition;
             }
     
@@ -264,7 +266,10 @@ class DB
             $conditions = [];
             foreach ($where as $condition) {
                 $column = $condition->column;
-                $operator = $condition->operator;
+                $operator = "=";
+                if (isset($condition->operator)){
+                    $operator = $condition->operator;
+                }
                 $value = $condition->value;
                 if (strtoupper($operator) == "BETWEEN"){
                     $conditions[] = "`$column` $operator :$column AND :$column" . 2;
@@ -299,7 +304,10 @@ class DB
         foreach ($where as $condition) {
             $column = $condition->column;
             $value = $condition->value;
-            $operator = $condition->operator;
+            $operator = "=";
+            if (isset($condition->operator)){
+                $operator = $condition->operator;
+            }
             if (is_float($value)){
                 $value = (float)$value;
             } else
@@ -307,7 +315,6 @@ class DB
                 $value = (int)$value;
             }
             $newCon[$column] = $value;
-            echo $operator;
             if (strtoupper($operator) == "BETWEEN"){
                 $newCon[$column . "2"] = $condition->value2;
             };

@@ -14,12 +14,12 @@ class Task
     public const ORDER_ASCEND     = 1;
     public const ORDER_DESCEND    = 2; 
 
-    public int    $user;
+    public string $user;
     public int    $action;      // write / update / delete / structure / 
     public string $type;        // e.g. table name Like "event, material, category, etc"
     public array  $objects;     // array of rows to handle
     public array  $where;       // array of objects where key + value Like [{"name" : "id", "value" : "33", "operator": "="}, {...}];
-    public int    $order;
+    public string $order;
     public int    $limit;
     public int    $offset;
     public string $setKey;      // if result should be an associative array, set array key
@@ -29,12 +29,12 @@ class Task
     public array  $lim;
     
     public function __construct(
-        int    $user,
+        string $user,
         int    $action, 
         string $type,
         array  $objects      = [],
         array  $where       = [],
-        int    $order       = 0,
+        string $order       = "",
         string $setKey      = "",
         int    $limit       = 0,
         int    $offset      = 0,
@@ -70,7 +70,7 @@ class Task
         return $obj;
     }
 
-    public static function taskFromObject($obj, $user = 0)
+    public static function taskFromObject($obj, $user = "")
     {
         if (!isset($obj->action)){ return "There is no action detected!"; };
         if (!isset($obj->type)){   return "There is no type definition detected!"; };
@@ -83,16 +83,17 @@ class Task
             $task->where = $obj->where;
         };
         if (isset($obj->order)) { 
-            $task->order = $obj->order;
+            $task->order = preg_match('/^[a-z0-9 .\-]+$/i', $obj->order);
+            $task->order = str_replace('join', '', strtolower($task->order));
         };
         if (isset($obj->limit)) { 
-            $task->limit = $obj->limit;
+            $task->limit = (int)$obj->limit;
         };
         if (isset($obj->setKey)) { 
             $task->setKey = $obj->setKey;
         };
         if (isset($obj->offset)) { 
-            $task->offset = $obj->offset;
+            $task->offset = (int)$obj->offset;
         };
         if (isset($obj->postActions)) { 
             $task->postActions = $obj->postActions;

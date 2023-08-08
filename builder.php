@@ -1,4 +1,21 @@
 <?php
+  require_once('C:\OSPanel\domains\microservice\objects\Category.php');
+  require_once('C:\OSPanel\domains\microservice\objects\Event.php');
+  require_once('C:\OSPanel\domains\microservice\objects\Section.php');
+  require_once('C:\OSPanel\domains\microservice\modules\TypeSanitizer.php');
+  require_once('C:\OSPanel\domains\microservice\server\DB.php');
+  require_once('C:\OSPanel\domains\microservice\server\Host.php');
+  require_once('C:\OSPanel\domains\microservice\server\Response.php');
+  require_once('C:\OSPanel\domains\microservice\server\Task.php');
+
+  use objects\Category;
+  use objects\Event;
+  use objects\Section;
+  use modules\TypeSanitizer;
+  use server\DB;
+  use server\Host;
+  use server\Response;
+  use server\Task;
 // 1 - find all files from "objects" and form namespaces
 // 2 - read source code in "source/index_source.php"
 // 3 - write "index.php":
@@ -62,5 +79,13 @@ $result .= $indexSrc;
     } else {
         echo "Build ok!";
     }
-    
+
+    $evt = Event::createTableQueryText();
+    DB::createTable($evt);
+    $evt = Category::createTableQueryText();
+    DB::createTable($evt);
+    $evt = Section::createTableQueryText();
+    DB::createTable($evt);
+
+    echo "Tables exists:";
 ?>

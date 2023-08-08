@@ -5,15 +5,16 @@ require_once("ObjectInterface.php");
 class Category implements ObjectInterface
 {
       // define service prefix for ID (each device or application has specified id)
-      const PREFIX = "w_";
+      const PREFIX = "s_";
 
       public string $id;
       public string $parent;
       public string $title;
+      public string $group;
       public string $color;
       public string $content;
   
-      public int $user;
+      public string $user;
       
       public int $locked;
       public int $events;
@@ -26,16 +27,16 @@ class Category implements ObjectInterface
       public string $updated_at;
       
   
-      public function __construct(string $title = "", int $user = 0, string $id = "")
+      public function __construct(string $title = "",  string $user = '__NULL__', string $id = "")
       {
           if ($id == ""){
-              $this->id = uniqid(self::PREFIX, true);
+              $this->id = uniqid(self::PREFIX);
           } else {
               $this->id = $id;
           };
-          if (strlen($title) > 190)
+          if (strlen($title) > 100)
           {
-              $this->title = mb_substr($title, 0, 190) . "...";
+              $this->title = mb_substr($title, 0, 100) . "...";
           } else {
               $this->title = $title;
           };
@@ -45,6 +46,7 @@ class Category implements ObjectInterface
           }
   
           $this->color = "";
+          $this->group = "";
           $this->content = "";
       
           $this->user = $user;
@@ -64,24 +66,25 @@ class Category implements ObjectInterface
       // Get new unique ID
       public function FreshId()
       {
-          $this->id = uniqid(self::PREFIX, true);
+          $this->id = uniqid(self::PREFIX);
       }
   
       public static function createTableQueryText() : string 
       {
           $text = "
           CREATE TABLE IF NOT EXISTS `category` (
-              `id` CHAR(26) NOT NULL,
-              `title` VARCHAR(200) NOT NULL,
+              `id` CHAR(15) NOT NULL,
+              `title` VARCHAR(105) NOT NULL,
+              `group` VARCHAR(100),
               `color` VARCHAR(8),
-              `user` INT UNSIGNED,
+              `user` CHAR(8) NOT NULL,
               `content` VARCHAR(1000),
               `locked` TINYINT DEFAULT 0,
               `events` TINYINT DEFAULT 0,
               `status` TINYINT DEFAULT 0,
               `ordered` INT DEFAULT 0,
               `parent` CHAR(26),
-              `level` UNSIGNED TINYINT DEFAULT 0,  
+              `level` TINYINT DEFAULT 0,
               `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
               `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
               PRIMARY KEY (`id`)) 
@@ -93,7 +96,8 @@ class Category implements ObjectInterface
       public static function getStringLimit($key)
       {
           $lim = [
-              'title'    => 190,
+              'title'    => 100,
+              'group'    => 100,
               'color'    => 8,
               'content'  => 1000
           ];
@@ -108,8 +112,9 @@ class Category implements ObjectInterface
           $map = [
             'id'         => 'string',
             'title'      => 'title',
+            'group'      => 'string',
             'color'      => 'string',
-            'user'       => 'int',
+            'user'       => 'string',
             'content'    => 'string',
             'locked'     => 'int',
             'events'     => 'int',

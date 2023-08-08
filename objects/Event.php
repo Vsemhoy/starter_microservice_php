@@ -5,7 +5,7 @@ require_once("ObjectInterface.php");
 class Event implements ObjectInterface
 {
     // define service prefix for ID (each device or application has specified id)
-    const PREFIX = "w_";
+    const PREFIX = "s_";
     const FORMAT_TEXT = 0;
     const FORMAT_HTML = 1;
 
@@ -17,7 +17,7 @@ class Event implements ObjectInterface
     public string $section;
     public string $category;
 
-    public int $user;
+    public string $user;
     public string $client;
     
     public int $locked;
@@ -33,7 +33,7 @@ class Event implements ObjectInterface
     public string $updated_at;
     
 
-    public function __construct(string $title = "", int $user = 0, string $id = "")
+    public function __construct(string $title = "", string $user = '__NULL__', string $id = "")
     {
         if ($id == ""){
             $this->id = uniqid(self::PREFIX, true);
@@ -84,21 +84,21 @@ class Event implements ObjectInterface
     {
         $text = "
         CREATE TABLE IF NOT EXISTS `event` (
-            `id` CHAR(26) NOT NULL,
+            `id` CHAR(25) NOT NULL,
             `parent` CHAR(26),
             `title` VARCHAR(200) NOT NULL,
             `section` CHAR(26),
             `category` CHAR(26),
-            `user` INT UNSIGNED,
+            `user` CHAR(8) NOT NULL,
             `client` VARCHAR(120),
             `content` TEXT,
-            `format` UNSIGNED TINYINT DEFAULT 0,
+            `format` TINYINT DEFAULT 0,
             `locked` TINYINT DEFAULT 0,
             `access` TINYINT DEFAULT 1,
             `status` TINYINT DEFAULT 0,
             `starred` TINYINT DEFAULT 0,
             `pinned` TINYINT DEFAULT 0,
-            `importance` UNSIGNED TINYINT DEFAULT 2 CHECK (importance >= 0 AND importance <= 10),
+            `importance` TINYINT DEFAULT 0 CHECK (importance >= 0 AND importance <= 10),
             `location` VARCHAR(50),
             `setdate` DATE,
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -134,7 +134,7 @@ class Event implements ObjectInterface
         'title'      => 'title',
         'section'    => 'string',
         'category'   => 'string',
-        'user'       => 'int',
+        'user'       => 'string',
         'client'     => 'string',
         'content'    => 'html',
         'locked'     => 'int',
@@ -161,3 +161,80 @@ class Event implements ObjectInterface
         return $name;
     }
 }
+
+/* C#
+// 25-char
+public static string GenerateRandomString(int length)
+{
+    const string pool = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    var random = new Random();
+    var result = new StringBuilder();
+
+    for (int i = 0; i < length; i++)
+    {
+        int index = random.Next(pool.Length);
+        result.Append(pool[index]);
+    }
+
+    return result.ToString();
+}
+
+
+public static string GenerateUniqueId(string prefix = "w_")
+{
+    lock (lockObject)
+    {
+        // Get the current timestamp in ticks
+        long ticks = DateTime.Now.Ticks;
+
+        // Generate a 4-digit random string for additional uniqueness
+        string randomNum = GenerateRandomString(4);
+
+        // Combine the prefix, timestamp, and random number to create the unique ID
+        string uniqueId = $"{prefix}{ticks}{randomNum}";
+
+        return uniqueId;
+    }
+}
+
+// 15-char
+public static string GenerateShortId(string prefix = "w_")
+{
+    lock (lockObject)
+    {
+        // Get the current timestamp in ticks
+        long ticks = DateTime.Now.Ticks;
+
+       // Generate a 5-digit random string for additional uniqueness
+        string randomNum = GenerateRandomString(5);
+
+        string tick_c = ticks.ToString().Substring(0, 13);
+        tick_c = tick_c.Remove(0,5);
+
+        // Combine the prefix, timestamp, and random number to create the unique ID
+        string uniqueId = $"{prefix}{tick_c}{randomNum}";
+
+        return uniqueId;
+    }
+}
+
+Working with Id's:
+
+The client application (e.g., Android app) generates a temporary ID for the new entity (e.g., Event) before sending it to the server.
+
+The client sends the new entity data along with the temporary ID to the server for synchronization.
+
+On the server side, when the request is received, the server first checks if the temporary ID is unique in the database.
+
+If the temporary ID is unique, the server saves the new entity to the database with the provided ID.
+
+If the temporary ID is not unique (collision), the server generates a new unique ID and saves the new entity with the new ID.
+
+The server then sends the updated entity data back to the client, including the final ID assigned by the server.
+
+The client updates the entity on its side with the final ID received from the server.
+
+By following this process, you can ensure that all IDs used in your system are unique, even if multiple clients attempt to create entities with the same temporary ID simultaneously.
+
+Remember to implement error handling and appropriate response messages to inform the client application about the status of the synchronization process and any ID replacements that occurred on the server side.
+*/

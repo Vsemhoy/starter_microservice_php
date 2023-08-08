@@ -58,10 +58,10 @@ class Host
             if (!isset($headers['Authorization'])){
                 return false;
             }
-
-            if (strpos($headers['Authorization'], 'TelesePost ') === 0) {
+            
+            if (strpos($headers['Authorization'], 'TelePost ') === 0) {
                 // Token is present in the format 'Bearer <token>'
-                $token = substr($headers['Authorization'], 11); // Extract the token portion
+                $token = substr($headers['Authorization'], 9); // Extract the token portion
                 // Now you can validate $token against your expected token
                 // For example, compare it with the stored token or use a JWT library to verify its authenticity
             }

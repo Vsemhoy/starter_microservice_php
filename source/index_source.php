@@ -53,7 +53,7 @@
         $response->status = 1;
         $response->message = "There is no task section detected!";
         if (!isset($inputObj->user)){
-            $response->user = (int)$inputObj->user;
+            $response->user = $inputObj->user;
         }
         print_r($response);
         return;
@@ -77,7 +77,7 @@
     $tasks = [];
     foreach($inputObj->tasks AS $taskObject)
     {
-      $task = Task::taskFromObject($taskObject, (int)$inputObj->user);
+      $task = Task::taskFromObject($taskObject, $inputObj->user);
       if (is_string($task))
       {
         $response = new Response();

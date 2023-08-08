@@ -5,34 +5,37 @@ require_once("ObjectInterface.php");
 class Section implements ObjectInterface
 {
     // define service prefix for ID (each device or application has specified id)
-    const PREFIX = "w_";
+    const PREFIX = "s_";
 
     public string $id;
     public string $title;
     public string $color;
     public string $content;
 
-    public int $user;
+    public string $user;
     
     public int $locked;
     public int $access;
     public int $status;
     public int $ordered;
+
+    public int $pinned; // e.g. placed in menu
+    public string $pinstyle;
     
     public string $created_at;
     public string $updated_at;
     
 
-    public function __construct(string $title = "", int $user = 0, string $id = "")
+    public function __construct(string $title = "", string $user = '__NULL__', string $id = "")
     {
         if ($id == ""){
             $this->id = uniqid(self::PREFIX, true);
         } else {
             $this->id = $id;
         };
-        if (strlen($title) > 190)
+        if (strlen($title) > 100)
         {
-            $this->title = mb_substr($title, 0, 190) . "...";
+            $this->title = mb_substr($title, 0, 100) . "...";
         } else {
             $this->title = $title;
         };
@@ -50,6 +53,8 @@ class Section implements ObjectInterface
         $this->access  = 1;
         $this->status  = 1;
         $this->ordered = 0;
+        $this->pinned = 0;
+        $this->pinstyle = "";
 
         $this->created_at = $dt;
         $this->updated_at = $dt;
@@ -65,15 +70,17 @@ class Section implements ObjectInterface
     {
         $text = "
         CREATE TABLE IF NOT EXISTS `section` (
-            `id` CHAR(26) NOT NULL,
-            `title` VARCHAR(200) NOT NULL,
+            `id` CHAR(15) NOT NULL,
+            `title` VARCHAR(105) NOT NULL,
             `color` VARCHAR(8),
-            `user` INT UNSIGNED,
+            `user` CHAR(8) NOT NULL,
             `content` VARCHAR(1000),
             `locked` TINYINT DEFAULT 0,
             `access` TINYINT DEFAULT 1,
             `status` TINYINT DEFAULT 0,
             `ordered` INT DEFAULT 0,
+            `pinned` INT DEFAULT 0,
+            `pinstyle` VARCHAR(1000) NOT NULL,
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`)) 
@@ -88,11 +95,13 @@ class Section implements ObjectInterface
             'title'   => 'title',
             'color'   => 'string',
             'content' => 'string',
-            'user'    => 'int',
+            'user'    => 'string',
+            'pinstyle' => 'string',
             'locked'  => 'int',
             'access'  => 'int',
             'status'  => 'int',
             'ordered' => 'int',
+            'pinned'  => 'int',
         ];
         return $map;
     }
@@ -100,9 +109,10 @@ class Section implements ObjectInterface
     public static function getStringLimit($key)
     {
         $lim = [
-            'title'   => 190,
-            'color'   => 8,
-            'content' => 1000
+            'title'    => 103,
+            'color'    => 8,
+            'content'  => 1000,
+            'pinstyle' => 1000,
         ];
         if (isset($lim[$key])){
             return $lim[$key];
