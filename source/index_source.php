@@ -43,7 +43,7 @@
         $response = new Response();
         $response->status = 1;
         $response->message = "There is no user section detected!";
-        print_r($response);
+        json_encode($response);
         return;
     };
 
@@ -55,7 +55,7 @@
         if (!isset($inputObj->user)){
             $response->user = $inputObj->user;
         }
-        print_r($response);
+        json_encode($response);
         return;
     };
 
@@ -67,7 +67,7 @@
         if (!isset($inputObj->user)){
             $response->user = (int)$inputObj->user;
         }
-        print_r($response);
+        json_encode($response);
         return;
     };
 
@@ -87,7 +87,7 @@
         if (!isset($inputObj->user)){
             $response->user = (int)$inputObj->user;
         }
-        print_r($response);
+        json_encode($response);
         return;
       }
       array_push($tasks, $task);
@@ -162,7 +162,8 @@
         
     }
 
-    print_r($response);
+    echo json_encode($response);
+    return;
     
     return;
     echo "<br>";
