@@ -128,26 +128,26 @@ class Event implements ObjectInterface
     }
 
     public static array $sanitize_map = [
-            'id'         => 'string',
-            'format'     => 'int', // Format can be always before content
-            'parent'     => 'string',
-            'title'      => 'title',
-            'section'    => 'string',
-            'category'   => 'string',
-            'user'       => 'int',
-            'client'     => 'string',
-            'content'    => 'html',
-            'locked'     => 'int',
-            'access'     => 'int',
-            'status'     => 'int',
-            'starred'    => 'int',
-            'pinned'     => 'int',
-            'importance' => 'int',
-            'location'   => 'json',
-            'setdate'    => 'date', // Assuming date is passed as a string
-            'created_at' => 'datetime', // Assuming date is passed as a string
-            'updated_at' => 'datetime', // Assuming date is passed as a string
-        ];
+        'id'         => 'string',
+        'format'     => 'int', // Format can be always before content
+        'parent'     => 'string',
+        'title'      => 'title',
+        'section'    => 'string',
+        'category'   => 'string',
+        'user'       => 'int',
+        'client'     => 'string',
+        'content'    => 'html',
+        'locked'     => 'int',
+        'access'     => 'int',
+        'status'     => 'int',
+        'starred'    => 'int',
+        'pinned'     => 'int',
+        'importance' => 'int',
+        'location'   => 'json',
+        'setdate'    => 'date', // Assuming date is passed as a string
+        'created_at' => 'datetime', // Assuming date is passed as a string
+        'updated_at' => 'datetime', // Assuming date is passed as a string
+    ];
 
 
 
