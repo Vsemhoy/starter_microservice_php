@@ -17,7 +17,7 @@ class Category implements ObjectInterface
       public string $user;
       
       public int $locked;
-      public int $events;
+      public int $event_counter;
       public int $status;
       public int $ordered;
 
@@ -52,7 +52,7 @@ class Category implements ObjectInterface
           $this->user = $user;
   
           $this->locked  = 0;
-          $this->events  = 0;
+          $this->event_counter  = 0;
           $this->status  = 1;
           $this->ordered = 0;
 
@@ -80,7 +80,7 @@ class Category implements ObjectInterface
               `user` CHAR(8) NOT NULL,
               `content` VARCHAR(1000),
               `locked` TINYINT DEFAULT 0,
-              `events` TINYINT DEFAULT 0,
+              `event_counter` BIGINT DEFAULT 0,
               `status` TINYINT DEFAULT 0,
               `ordered` INT DEFAULT 0,
               `parent` CHAR(26),
@@ -117,7 +117,7 @@ class Category implements ObjectInterface
             'user'       => 'string',
             'content'    => 'string',
             'locked'     => 'int',
-            'events'     => 'int',
+            'event_counter'     => 'int',
             'status'     => 'int',
             'ordered'    => 'int',
             'parent'     => 'string',

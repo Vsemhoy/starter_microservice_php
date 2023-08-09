@@ -6,7 +6,7 @@ class Response
     public int    $status;
     public string $message;
     public array  $objects;
-    public int    $user;
+    public string    $user;
     public array  $results;
 
     public function __construct()
@@ -15,6 +15,6 @@ class Response
         $this->status  = 0;
         $this->message = "";
         $this->results = [];
-        $this->user = 0;
+        $this->user = "";
     }
 }

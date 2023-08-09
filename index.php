@@ -86,7 +86,7 @@
         $response->status = 1;
         $response->message = "There is no one task detected!";
         if (!isset($inputObj->user)){
-            $response->user = (int)$inputObj->user;
+            $response->user = $inputObj->user;
         }
         json_encode($response);
         return;
@@ -106,7 +106,7 @@
         $response->message = "The problem with task definition: " . $task ;
         $response->objects = $inputObj->tasks;
         if (!isset($inputObj->user)){
-            $response->user = (int)$inputObj->user;
+            $response->user = $inputObj->user;
         }
         json_encode($response);
         return;
@@ -161,7 +161,7 @@
                     $newObj = getTypeByName($task->type);
                     // prepare to store into db
                     $objNn = TypeSanitizer::rebuildAndSanitizeObjectFromStd($newObj, $getObj);
-                    $objNn->user = (int)$inputObj->user;
+                    $objNn->user = $inputObj->user;
                     array_push($newObjects, $objNn);
                 }
                 foreach ($newObjects AS $objectToWrite)
