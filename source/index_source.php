@@ -145,16 +145,22 @@
                 }
                 foreach ($newObjects AS $objectToWrite)
                 {
+                    if (strtolower( $task->type) == 'section'){
+                        if ($objectToWrite->color == null || $objectToWrite->color == "")
+                        {
+                            $objectToWrite->color = ContentGenerator::generatePastelColor();
+                        }
+                    }
                     $transid = null;
                     // return object back with new item
-// need to set temporary trans id for api
-if (issset($objectToWrite->transs_id){
-    $transid = $objectToWrrite->trans_id;
-    unset($objectToWrite->transs_id);
-}
-
-                    array_push( $newObjects , DB::writeObject($objectToWrite));
-                // set tid
+                    // need to set temporary trans id for api
+                    if (issset($objectToWrite->trans_id){
+                        $transid = $objectToWrrite->trans_id;
+                        unset($objectToWrite->trans_id);
+                    }
+                    $tempObj = DB::writeObject($objectToWrite);
+                    $tempObj->trans_id = $transid;
+                    array_push( $newObjects , $tempObj);
                 };
 
              // 5 - update entry
