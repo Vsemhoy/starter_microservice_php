@@ -145,7 +145,9 @@
                 }
                 foreach ($newObjects AS $objectToWrite)
                 {
-                    DB::writeObject($objectToWrite);
+                    // return object back with new item
+// need to set temporary trans id for api
+                    array_push( $newObjects , DB::writeObject($objectToWrite));
                 };
 
              // 5 - update entry

@@ -155,7 +155,7 @@ class DB
             // If there's an exception (error), catch it and return false
             return false;
         }
-        return true;
+        return $object;
     }
 
 
