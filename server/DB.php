@@ -150,6 +150,9 @@ class DB
 
             // Execute the INSERT statement
             $stmt->execute();
+            if ($unsetStamps){
+                $object->created_at = date("Y-m-d H:i:s");
+            }
             return true; // Success, return true
         } catch (PDOException $e) {
             // If there's an exception (error), catch it and return false
