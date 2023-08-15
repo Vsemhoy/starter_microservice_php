@@ -110,7 +110,6 @@ class DB
             return true;
     }
 
-
     public static function writeObject($object, bool $unsetStamps = true) 
     {
         if ($unsetStamps)
@@ -153,12 +152,11 @@ class DB
             if ($unsetStamps){
                 $object->created_at = date("Y-m-d H:i:s");
             }
-            return true; // Success, return true
+            return $object; // Success, return true
         } catch (PDOException $e) {
             // If there's an exception (error), catch it and return false
-            return false;
+            return $e;
         }
-        return $object;
     }
 
 
