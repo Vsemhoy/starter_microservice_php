@@ -173,7 +173,45 @@
                 };
 
              // 5 - update entry
-             
+             case 5:
+                $newObjects = [];
+                $sanitizedObjects = [];
+                foreach ($task->objects AS $getObj){
+                    $newObj = getTypeByName($task->type);
+                    // prepare to store into db
+                    $objNn = TypeSanitizer::rebuildAndSanitizeObjectFromStd($newObj, $getObj);
+                    $objNn->user = $inputObj->user;
+                    array_push($sanitizedObjects, $objNn);
+                }
+                foreach ($sanitizedObjects AS $objectToWrite)
+                {
+                    if (strtolower( $task->type) == 'section'){
+                        if ($objectToWrite->color == null || $objectToWrite->color == "")
+                        {
+                            $objectToWrite->color = ContentGenerator::generatePastelColor();
+                        }
+                    }
+                    $transid = null;
+                    // return object back with new item
+                    // need to set temporary trans id for api
+                    if (isset($objectToWrite->trans_id)){
+                        $transid = $objectToWrrite->trans_id;
+                        unset($objectToWrite->trans_id);
+                    };
+                    $result  = DB::updateObject($objectToWrite);
+                    if (is_string($result)){
+                        $response->status = 1;
+                        $response->message = $result;
+                    } else {
+                        $tempObj = $result;
+                        if ($transid != null){
+                            $tempObj->trans_id = $transid;
+                        }
+                        array_push( $newObjects , $tempObj);
+                    }
+                };
+
+
              // 7 - delete rows
 
                 // $rowData = DB::getRows($task);

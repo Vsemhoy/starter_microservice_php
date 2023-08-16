@@ -1,25 +1,19 @@
 <?php
 namespace server;
+if (!defined('MICROSERVICE')){
+    define('MICROSERVICE', 'teledox');
+};
+require_once($_SERVER['DOCUMENT_ROOT'] .'/config.php');
+use Config;
 use server\DB;
 
 class Host
 {
     public const CHECKTOKEN = true;
 
-    private const REMOTE_HOSTS = [
-        "localhost" => "127.0.0.1",
-        "android" => "188.242.226.185"
-    ];
-
-    private const REMOTE_HOST_TOKENS = [
-        "localhost" =>  "kd5sjjkqrjke365jqrkj65kjejJJKD356JDjg89k3fjgf",
-        "android" =>  "kd5sjjkqrjke365jqrkj65kjejJJKD356JDjg89k3fjgf"
-    ];
-
-    
-
     public static function Allowed(bool $checkToken = false) : bool 
     {
+        $config = new Config();
         /*
         // Check for banned session on every request
         session_start();
@@ -37,7 +31,7 @@ class Host
         $headers = getallheaders();
         $hostKey = null;
 
-        foreach (self::REMOTE_HOSTS AS $key => $addr){
+        foreach ($config->remote_hosts AS $key => $addr){
             if ($_SERVER['REMOTE_ADDR'] == trim($addr)){
 
                 if (!$checkToken){
@@ -69,7 +63,7 @@ class Host
             if (isset($_GET['remoteservice'])){
 
                 if ($hostKey === $_GET['remoteservice']){
-                    if ($token === self::REMOTE_HOST_TOKENS[$hostKey]){
+                    if ($token === $config->remote_host_tokens[$hostKey]){
 
                         return true;
                     }

@@ -3,6 +3,7 @@
   require_once('C:\OSPanel\domains\microservice\objects\Category.php');
   require_once('C:\OSPanel\domains\microservice\objects\Event.php');
   require_once('C:\OSPanel\domains\microservice\objects\Section.php');
+  require_once('C:\OSPanel\domains\microservice\modules\ContentGenerator.php');
   require_once('C:\OSPanel\domains\microservice\modules\TypeSanitizer.php');
   require_once('C:\OSPanel\domains\microservice\server\DB.php');
   require_once('C:\OSPanel\domains\microservice\server\Host.php');
@@ -12,6 +13,7 @@
   use objects\Category;
   use objects\Event;
   use objects\Section;
+  use modules\ContentGenerator;
   use modules\TypeSanitizer;
   use server\DB;
   use server\Host;
@@ -157,20 +159,82 @@
                 // Write new entity
             case 3:
                 $newObjects = [];
+                $sanitizedObjects = [];
                 foreach ($task->objects AS $getObj){
                     $newObj = getTypeByName($task->type);
                     // prepare to store into db
                     $objNn = TypeSanitizer::rebuildAndSanitizeObjectFromStd($newObj, $getObj);
                     $objNn->user = $inputObj->user;
-                    array_push($newObjects, $objNn);
+                    array_push($sanitizedObjects, $objNn);
                 }
-                foreach ($newObjects AS $objectToWrite)
+                foreach ($sanitizedObjects AS $objectToWrite)
                 {
-                    DB::writeObject($objectToWrite);
+                    if (strtolower( $task->type) == 'section'){
+                        if ($objectToWrite->color == null || $objectToWrite->color == "")
+                        {
+                            $objectToWrite->color = ContentGenerator::generatePastelColor();
+                        }
+                    }
+                    $transid = null;
+                    // return object back with new item
+                    // need to set temporary trans id for api
+                    if (isset($objectToWrite->trans_id)){
+                        $transid = $objectToWrrite->trans_id;
+                        unset($objectToWrite->trans_id);
+                    };
+                    $result  = DB::writeObject($objectToWrite);
+                    if (is_string($result)){
+                        $response->status = 1;
+                        $response->message = $result;
+                    } else {
+                        $tempObj = $result;
+                        if ($transid != null){
+                            $tempObj->trans_id = $transid;
+                        }
+                        array_push( $newObjects , $tempObj);
+                    }
                 };
 
              // 5 - update entry
-             
+             case 5:
+                $newObjects = [];
+                $sanitizedObjects = [];
+                foreach ($task->objects AS $getObj){
+                    $newObj = getTypeByName($task->type);
+                    // prepare to store into db
+                    $objNn = TypeSanitizer::rebuildAndSanitizeObjectFromStd($newObj, $getObj);
+                    $objNn->user = $inputObj->user;
+                    array_push($sanitizedObjects, $objNn);
+                }
+                foreach ($sanitizedObjects AS $objectToWrite)
+                {
+                    if (strtolower( $task->type) == 'section'){
+                        if ($objectToWrite->color == null || $objectToWrite->color == "")
+                        {
+                            $objectToWrite->color = ContentGenerator::generatePastelColor();
+                        }
+                    }
+                    $transid = null;
+                    // return object back with new item
+                    // need to set temporary trans id for api
+                    if (isset($objectToWrite->trans_id)){
+                        $transid = $objectToWrrite->trans_id;
+                        unset($objectToWrite->trans_id);
+                    };
+                    $result  = DB::updateObject($objectToWrite);
+                    if (is_string($result)){
+                        $response->status = 1;
+                        $response->message = $result;
+                    } else {
+                        $tempObj = $result;
+                        if ($transid != null){
+                            $tempObj->trans_id = $transid;
+                        }
+                        array_push( $newObjects , $tempObj);
+                    }
+                };
+
+
              // 7 - delete rows
 
                 // $rowData = DB::getRows($task);

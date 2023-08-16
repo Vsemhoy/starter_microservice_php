@@ -1,26 +1,28 @@
 <?php
 namespace server;
+if (!defined('MICROSERVICE')){
+    define('MICROSERVICE', 'teledox');
+};
+require_once($_SERVER['DOCUMENT_ROOT'] .'/config.php');
 use PDO;
+use Config;
 
 class DB
 {
-    private const dbname = "microservicer";
-    private const host = "localhost";
-    private const dbuser = "root";
-    private const dbpass = "";
-
     public static function GetPdo(string $port = "", array $extra = [])
     {
-        $string = "mysql:host=" . self::host . ";";
+        $config = new Config();
+
+        $string = "mysql:host=" . $config->host . ";";
         if ($port != ""){
             $string .= "port=" . $port . ";";
         };
-        $string .= "dbname=" . self::dbname . "";
+        $string .= "dbname=" . $config->dbname . "";
 
         if (count($extra) > 0){
-           return new PDO($string, self::dbuser, self::dbpass);
+           return new PDO($string, $config->dbuser, $config->dbpass);
         } else {
-            return new PDO($string, self::dbuser, self::dbpass, $extra);
+            return new PDO($string, $config->dbuser, $config->dbpass, $extra);
         }
         return null;
     }
@@ -110,54 +112,7 @@ class DB
             return true;
     }
 
-    public static function writeObject($object, bool $unsetStamps = true) 
-    {
-        if ($unsetStamps)
-        {
-            if (isset($object->created_at)){
-                unset($object->created_at);
-            };
-            if (isset($object->updated_at)){
-                unset($object->updated_at);
-            };
-        };
-        $table = strtolower($object->Name());
 
-        $limit = 12;
-        while(!DB::CheckFreeId($table, $object->id))
-        {
-            $limit--;
-            if ($limit == 0){
-                return false;
-            }
-            $object->FreshId();
-        }
-
-        $columns = implode('`, `', array_keys((array) $object));
-        $placeholders = ':' . implode(', :', array_keys((array) $object));
-        $query = "INSERT INTO `$table` (`$columns`) VALUES ($placeholders)";
-
-        try {
-            $pdo = DB::GetPdo();
-            $stmt = $pdo->prepare($query);
-
-            // Bind the values from the object's properties to the placeholders
-            foreach ($object AS $key => $value)
-            {
-                $stmt->bindValue(':'.$key, $value);
-            }
-
-            // Execute the INSERT statement
-            $stmt->execute();
-            if ($unsetStamps){
-                $object->created_at = date("Y-m-d H:i:s");
-            }
-            return $object; // Success, return true
-        } catch (PDOException $e) {
-            // If there's an exception (error), catch it and return false
-            return $e;
-        }
-    }
 
 
     public static function GetSingleRow(string $table, string $id)
@@ -335,4 +290,106 @@ class DB
     }
 
 
+    public static function writeObject($object, bool $unsetStamps = true) 
+    {
+        if ($unsetStamps)
+        {
+            if (isset($object->created_at)){
+                unset($object->created_at);
+            };
+            if (isset($object->updated_at)){
+                unset($object->updated_at);
+            };
+        };
+        $table = strtolower($object->Name());
+
+        $limit = 12;
+        while(!DB::CheckFreeId($table, $object->id))
+        {
+            $limit--;
+            if ($limit == 0){
+                return false;
+            }
+            $object->FreshId();
+        }
+
+        $columns = implode('`, `', array_keys((array) $object));
+        $placeholders = ':' . implode(', :', array_keys((array) $object));
+        $query = "INSERT INTO `$table` (`$columns`) VALUES ($placeholders)";
+
+        try {
+            $pdo = DB::GetPdo();
+            $stmt = $pdo->prepare($query);
+
+            // Bind the values from the object's properties to the placeholders
+            foreach ($object AS $key => $value)
+            {
+                $stmt->bindValue(':'.$key, $value);
+            }
+
+            // Execute the INSERT statement
+            $stmt->execute();
+            if ($unsetStamps){
+                $object->created_at = date("Y-m-d H:i:s");
+            }
+            return $object; // Success, return true
+        } catch (PDOException $e) {
+            // If there's an exception (error), catch it and return false
+            return $e;
+        }
+    }
+
+
+    public static function updateObject($object, bool $unsetStamps = true) 
+    {
+        $created = "";
+        if ($unsetStamps) {
+            $created = $object->created_at;
+            if (isset($object->created_at)) {
+                unset($object->created_at);
+            }
+            if (isset($object->updated_at)) {
+                unset($object->updated_at);
+            }
+        }
+        
+        $table = strtolower($object->Name());
+
+        $setClause = '';
+        $dataToUpdate = [];
+        
+        foreach ($object as $key => $value) {
+            $setClause .= "`$key` = :$key, ";
+            $dataToUpdate[$key] = $value;
+        }
+        
+        $setClause = rtrim($setClause, ', ');
+        
+        $query = "UPDATE `$table` SET $setClause WHERE `id` = :id";
+
+        try {
+            $pdo = DB::GetPdo();
+            $stmt = $pdo->prepare($query);
+            
+            $stmt->bindValue(':id', $object->id);
+
+            // Bind the values from the object's properties to the placeholders
+            foreach ($dataToUpdate as $key => $value) {
+                $stmt->bindValue(":$key", $value);
+            }
+
+            // Execute the UPDATE statement
+            $stmt->execute();
+            
+            if ($unsetStamps) {
+                $object->updated_at = date("Y-m-d H:i:s");
+                $object->created_at = $created;
+            }
+            
+            return $object; // Success
+        } catch (PDOException $e) {
+            // If there's an exception (error), catch it and return false
+            return $e;
+        }
+    }
 }
