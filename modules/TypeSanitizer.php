@@ -55,12 +55,12 @@ class TypeSanitizer
         switch ($type) {
             case 'string':
             case 'text':
-                return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+                return trim(htmlspecialchars($value, ENT_QUOTES, 'UTF-8'));
                 break;
                 
             case 'title':
                 $cleanedString = str_replace(array('`', '\\'), '', $value);
-                return htmlspecialchars($cleanedString, ENT_QUOTES, 'UTF-8');
+                return trim(htmlspecialchars($cleanedString, ENT_QUOTES, 'UTF-8'));
                 break;
 
             case 'html':
@@ -72,7 +72,7 @@ class TypeSanitizer
                 $cleanedHTML = preg_replace('/<[^>]*>/', '', $cleanedHTML);
 
                 $value = htmlspecialchars($cleanedHTML);
-                return $value;
+                return trim($value);
                 break;
 
             case 'int':

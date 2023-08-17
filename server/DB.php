@@ -304,6 +304,10 @@ class DB
         $table = strtolower($object->Name());
 
         $limit = 12;
+        if (empty($object->id)){
+            $object->FreshId();
+        }
+
         while(!DB::CheckFreeId($table, $object->id))
         {
             $limit--;
@@ -340,7 +344,7 @@ class DB
     }
 
 
-    public static function updateObject($object, bool $unsetStamps = true) 
+    public static function updateObject($object, $user, bool $unsetStamps = true) 
     {
         $created = "";
         if ($unsetStamps) {
@@ -354,9 +358,19 @@ class DB
         }
         
         $table = strtolower($object->Name());
-
         $setClause = '';
         $dataToUpdate = [];
+
+        $item = self::GetSingleRow($table, $object->id);
+        if ($item != false){
+            if ($item['user'] != $user){
+                return "No rigths for delete.";
+            }
+            if ($item['locked'] == 1){
+                return "The item is locked.";
+            }
+        }
+
         
         foreach ($object as $key => $value) {
             $setClause .= "`$key` = :$key, ";
@@ -370,7 +384,6 @@ class DB
         try {
             $pdo = DB::GetPdo();
             $stmt = $pdo->prepare($query);
-            
             $stmt->bindValue(':id', $object->id);
 
             // Bind the values from the object's properties to the placeholders
@@ -386,6 +399,36 @@ class DB
                 $object->created_at = $created;
             }
             
+            return $object; // Success
+        } catch (PDOException $e) {
+            // If there's an exception (error), catch it and return false
+            return $e;
+        }
+    }
+
+
+    public static function deleteObject($object, $user) {
+        $table = strtolower($object->Name());
+        $id = trim($object->id);
+
+        $item = self::GetSingleRow($table, $id);
+        if ($item != false){
+            if ($item['user'] != $user){
+                return "No rigths for delete.";
+            }
+        }
+
+        $query = "DELETE FROM `$table` WHERE `id` = :id";
+
+        try {
+            $pdo = DB::GetPdo();
+            $stmt = $pdo->prepare($query);
+            $stmt->bindValue(':id', $id);
+           // $stmt->bindValue(':user', $user);
+
+
+            // Execute the DELETE statement
+            $stmt->execute();
             return $object; // Success
         } catch (PDOException $e) {
             // If there's an exception (error), catch it and return false

@@ -78,6 +78,7 @@ class Event implements ObjectInterface
     public function FreshId()
     {
         $this->id = uniqid(self::PREFIX, true);
+        return $this->id;
     }
 
     public static function createTableQueryText() : string 

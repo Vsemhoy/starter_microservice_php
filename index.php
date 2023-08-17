@@ -70,6 +70,8 @@
         return;
     };
 
+    $globalUser = $inputObj->user;
+
     if (!isset($inputObj->tasks))
     {
         $response = new Response();
@@ -194,6 +196,8 @@
                         array_push( $newObjects , $tempObj);
                     }
                 };
+                $task->results = $newObjects;
+                break;
 
              // 5 - update entry
              case 5:
@@ -221,7 +225,7 @@
                         $transid = $objectToWrrite->trans_id;
                         unset($objectToWrite->trans_id);
                     };
-                    $result  = DB::updateObject($objectToWrite);
+                    $result  = DB::updateObject($objectToWrite, $globalUser);
                     if (is_string($result)){
                         $response->status = 1;
                         $response->message = $result;
@@ -233,10 +237,32 @@
                         array_push( $newObjects , $tempObj);
                     }
                 };
-
+                $task->results = $newObjects;
+                break;
 
              // 7 - delete rows
+             case 7:
+                $newObjects = [];
+                $sanitizedObjects = [];
+                foreach ($task->objects AS $getObj){
+                    $newObj = getTypeByName($task->type);
+                    // prepare to store into db
+                    $objNn = TypeSanitizer::rebuildAndSanitizeObjectFromStd($newObj, $getObj);
+                    $objNn->user = $inputObj->user;
+                    array_push($sanitizedObjects, $objNn);
+                }
+                foreach ($sanitizedObjects AS $objectToWrite)
+                {
 
+                    $result  = DB::deleteObject($objectToWrite, $globalUser);
+                    if (is_string($result)){
+                        $response->status = 1;
+                        $response->message = $result;
+                    } else {
+                        $tempObj = $result;
+                        array_push( $newObjects , $tempObj);
+                    }
+                };
                 // $rowData = DB::getRows($task);
                 // if ($rowData == false){ break; };
                 $task->results = $newObjects;
