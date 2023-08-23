@@ -29,18 +29,18 @@ class Section implements ObjectInterface
     public function __construct(string $title = "", string $user = '__NULL__', string $id = "")
     {
         if ($id == ""){
-            $this->id = uniqid(self::PREFIX, true);
+            $this->id = uniqid(self::PREFIX);
         } else {
             $this->id = $id;
         };
         if (strlen($title) > 100)
         {
-            $this->title = mb_substr($title, 0, 100) . "...";
+            $this->title = mb_substr($title, 0, 60) . "...";
         } else {
             $this->title = $title;
         };
         $dt = date("Y-m-d H:i:s");
-        if (mb_strlen($title) < 1){
+        if (strlen($title) < 1){
             $this->title = $dt;
         }
 
@@ -63,7 +63,7 @@ class Section implements ObjectInterface
     // Get new unique ID
     public function FreshId()
     {
-        $this->id = uniqid(self::PREFIX, true);
+        $this->id = uniqid(self::PREFIX);
     }
 
     public static function createTableQueryText() : string 
@@ -89,27 +89,29 @@ class Section implements ObjectInterface
             return $text;
     }
 
-    public static function getSanitizeMap()
-    {
-        $map = [
-            'title'   => 'title',
-            'color'   => 'string',
-            'content' => 'string',
-            'user'    => 'string',
-            'pinstyle' => 'string',
-            'locked'  => 'int',
-            'access'  => 'int',
-            'status'  => 'int',
-            'ordered' => 'int',
-            'pinned'  => 'int',
-        ];
-        return $map;
+    public static function getSanitizeMap(){
+        return Section::$sanitize_map;
     }
+
+    public static array $sanitize_map = [
+        'id'      => 'string',
+        'title'   => 'title',
+        'color'   => 'string',
+        'content' => 'string',
+        'user'    => 'string',
+        'pinstyle' => 'string',
+        'locked'  => 'int',
+        'access'  => 'int',
+        'status'  => 'int',
+        'ordered' => 'int',
+        'pinned'  => 'int',
+    ];
+
 
     public static function getStringLimit($key)
     {
         $lim = [
-            'title'    => 103,
+            'title'    => 60,
             'color'    => 8,
             'content'  => 1000,
             'pinstyle' => 1000,

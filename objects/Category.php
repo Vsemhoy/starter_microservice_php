@@ -30,7 +30,7 @@ class Category implements ObjectInterface
       public function __construct(string $title = "",  string $user = '__NULL__', string $id = "")
       {
           if ($id == ""){
-              $this->id = uniqid(self::PREFIX);
+            $this->id = uniqid(self::PREFIX);
           } else {
               $this->id = $id;
           };
@@ -107,26 +107,27 @@ class Category implements ObjectInterface
           return 0;
       }
   
-      public static function getSanitizeMap()
-      {
-          $map = [
-            'id'         => 'string',
-            'title'      => 'title',
-            'group'      => 'string',
-            'color'      => 'string',
-            'user'       => 'string',
-            'content'    => 'string',
-            'locked'     => 'int',
-            'event_counter'     => 'int',
-            'status'     => 'int',
-            'ordered'    => 'int',
-            'parent'     => 'string',
-            'level'      => 'int',
-            'created_at' => 'datetime', // Assuming date is passed as a string
-            'updated_at' => 'datetime', // Assuming date is passed as a string
-          ];
-          return $map;
-      }
+      public static function getSanitizeMap(){
+        return Category::$sanitize_map;
+    }
+
+    public static array $sanitize_map = [
+        'id'         => 'string',
+        'title'      => 'title',
+        'group'      => 'string',
+        'color'      => 'string',
+        'user'       => 'string',
+        'content'    => 'string',
+        'locked'     => 'int',
+        'event_counter'     => 'int',
+        'status'     => 'int',
+        'ordered'    => 'int',
+        'parent'     => 'string',
+        'level'      => 'int',
+        'created_at' => 'datetime', // Assuming date is passed as a string
+        'updated_at' => 'datetime', // Assuming date is passed as a string
+    ];
+
 
       public function Name()
       {

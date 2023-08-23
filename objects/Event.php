@@ -86,10 +86,10 @@ class Event implements ObjectInterface
         $text = "
         CREATE TABLE IF NOT EXISTS `event` (
             `id` CHAR(25) NOT NULL,
-            `parent` CHAR(26),
+            `parent` CHAR(25),
             `title` VARCHAR(200) NOT NULL,
-            `section` CHAR(26),
-            `category` CHAR(26),
+            `section` CHAR(15),
+            `category` CHAR(15),
             `user` CHAR(8) NOT NULL,
             `client` VARCHAR(120),
             `content` TEXT,
@@ -104,7 +104,9 @@ class Event implements ObjectInterface
             `setdate` DATE,
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (`id`)) 
+            PRIMARY KEY (`id`), 
+            FOREIGN KEY (`section`) REFERENCES `section`(`id`) ON DELETE RESTRICT, 
+            FOREIGN KEY (`category`) REFERENCES `category`(`id`) ON DELETE RESTRICT) 
             ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
             ";
             return $text;
