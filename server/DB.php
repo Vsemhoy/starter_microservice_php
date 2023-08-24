@@ -407,6 +407,56 @@ class DB
     }
 
 
+    public static function updateObjectOrder($object, $user, bool $unsetStamps = true) 
+    {
+        if ($unsetStamps) {
+            if (isset($object->updated_at)) {
+                unset($object->updated_at);
+            }
+        }
+        
+        $table = strtolower($object->Name());
+        $setClause = '';
+        $dataToUpdate = [];
+
+        $item = self::GetSingleRow($table, $object->id);
+        if ($item != false){
+            if ($item['user'] != $user){
+                return "No rigths for update.";
+            }
+        }
+        $setClause .= "`ordered` = :ordered, ";
+        $dataToUpdate['ordered'] = $object->ordered;
+        
+        $setClause = rtrim($setClause, ', ');
+        
+        $query = "UPDATE `$table` SET $setClause WHERE `id` = :id";
+
+        try {
+            $pdo = DB::GetPdo();
+            $stmt = $pdo->prepare($query);
+            $stmt->bindValue(':id', $object->id);
+
+            // Bind the values from the object's properties to the placeholders
+            foreach ($dataToUpdate as $key => $value) {
+                $stmt->bindValue(":$key", $value);
+            }
+
+            // Execute the UPDATE statement
+            $stmt->execute();
+            
+            if ($unsetStamps) {
+                $object->updated_at = date("Y-m-d H:i:s");
+            }
+            
+            return $object; // Success
+        } catch (PDOException $e) {
+            // If there's an exception (error), catch it and return false
+            return $e;
+        }
+    }
+
+
     public static function deleteObject($object, $user) {
         $table = strtolower($object->Name());
         $id = trim($object->id);

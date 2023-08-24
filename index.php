@@ -240,6 +240,31 @@
                 $task->results = $newObjects;
                 break;
 
+             // 6 - update `ordered`
+             case 6:
+                $newObjects = [];
+                $sanitizedObjects = [];
+                foreach ($task->objects AS $getObj){
+                    $newObj = getTypeByName($task->type);
+                    // prepare to store into db
+                    $objNn = TypeSanitizer::rebuildAndSanitizeObjectFromStd($newObj, $getObj);
+                    $objNn->user = $inputObj->user;
+                    array_push($sanitizedObjects, $objNn);
+                }
+                foreach ($sanitizedObjects AS $objectToWrite)
+                {
+                    $result  = DB::updateObjectOrder($objectToWrite, $globalUser);
+                    if (is_string($result)){
+                        $response->status = 1;
+                        $response->message = $result;
+                    } else {
+                        $tempObj = $result;
+                        array_push( $newObjects , $tempObj);
+                    }
+                };
+                $task->results = $newObjects;
+                break;
+
              // 7 - delete rows
              case 7:
                 $newObjects = [];

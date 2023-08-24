@@ -83,8 +83,8 @@ class Task
             $task->where = $obj->where;
         };
         if (isset($obj->order)) { 
-            $task->order = preg_match('/^[a-z0-9 .\-]+$/i', $obj->order);
-            $task->order = str_replace('join', '', strtolower($task->order));
+            $task->order = preg_replace('/[^a-zA-Z0-9 ]/', '', $obj->order);
+            //$task->order = str_replace('join', '', strtolower($task->order));
         };
         if (isset($obj->limit)) { 
             $task->limit = (int)$obj->limit;
