@@ -6,6 +6,7 @@ if (!defined('MICROSERVICE')){
 require_once($_SERVER['DOCUMENT_ROOT'] .'/config.php');
 use PDO;
 use Config;
+use PDOException;
 
 class DB
 {

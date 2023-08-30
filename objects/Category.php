@@ -8,11 +8,11 @@ class Category implements ObjectInterface
       const PREFIX = "s_";
 
       public string $id;
-      public string $parent;
+      public ?string $parent;
       public string $title;
-      public string $group;
+      public ?string $group;
       public string $color;
-      public string $content;
+      public ?string $content;
   
       public string $user;
       
@@ -114,15 +114,15 @@ class Category implements ObjectInterface
     public static array $sanitize_map = [
         'id'         => 'string',
         'title'      => 'title',
-        'group'      => 'string',
+        'group'      => 'nstring',
         'color'      => 'string',
         'user'       => 'string',
-        'content'    => 'string',
+        'content'    => 'nstring',
         'locked'     => 'int',
-        'event_counter'     => 'int',
+        'event_counter'  => 'int',
         'status'     => 'int',
         'ordered'    => 'int',
-        'parent'     => 'string',
+        'parent'     => 'nstring',
         'level'      => 'int',
         'created_at' => 'datetime', // Assuming date is passed as a string
         'updated_at' => 'datetime', // Assuming date is passed as a string

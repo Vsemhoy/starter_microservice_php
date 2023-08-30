@@ -10,7 +10,7 @@ class Section implements ObjectInterface
     public string $id;
     public string $title;
     public string $color;
-    public string $content;
+    public ?string $content;
 
     public string $user;
     
@@ -97,7 +97,7 @@ class Section implements ObjectInterface
         'id'      => 'string',
         'title'   => 'title',
         'color'   => 'string',
-        'content' => 'string',
+        'content' => 'nstring',
         'user'    => 'string',
         'pinstyle' => 'string',
         'locked'  => 'int',

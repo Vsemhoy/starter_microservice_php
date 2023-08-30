@@ -1,5 +1,6 @@
 <?php
 namespace modules;
+use DateTime;
 
 class TypeSanitizer
 {
@@ -55,6 +56,13 @@ class TypeSanitizer
         switch ($type) {
             case 'string':
             case 'text':
+                return trim(htmlspecialchars($value, ENT_QUOTES, 'UTF-8'));
+                break;
+            
+            case 'nstring':
+                if ($value == null) {
+                    return null;
+                };
                 return trim(htmlspecialchars($value, ENT_QUOTES, 'UTF-8'));
                 break;
                 

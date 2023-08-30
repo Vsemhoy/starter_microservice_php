@@ -165,6 +165,7 @@
                 foreach ($task->objects AS $getObj){
                     $newObj = getTypeByName($task->type);
                     // prepare to store into db
+                    if ($getObj->id == null){ $getObj->id = '';};
                     $objNn = TypeSanitizer::rebuildAndSanitizeObjectFromStd($newObj, $getObj);
                     $objNn->user = $inputObj->user;
                     array_push($sanitizedObjects, $objNn);
