@@ -11,6 +11,7 @@ class Section implements ObjectInterface
     public string $title;
     public string $color;
     public ?string $content;
+    public string $categories;
 
     public string $user;
     
@@ -43,7 +44,7 @@ class Section implements ObjectInterface
         if (strlen($title) < 1){
             $this->title = $dt;
         }
-
+        $this->categories = "";
         $this->color = "";
         $this->content = "";
     
@@ -75,6 +76,7 @@ class Section implements ObjectInterface
             `color` VARCHAR(8),
             `user` CHAR(8) NOT NULL,
             `content` VARCHAR(1000),
+            `categories` VARCHAR(1000) NOT NULL,
             `locked` TINYINT DEFAULT 0,
             `access` TINYINT DEFAULT 1,
             `status` TINYINT DEFAULT 0,
@@ -98,6 +100,7 @@ class Section implements ObjectInterface
         'title'   => 'title',
         'color'   => 'string',
         'content' => 'nstring',
+        'categories' => 'string',
         'user'    => 'string',
         'pinstyle' => 'string',
         'locked'  => 'int',
