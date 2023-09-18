@@ -204,7 +204,7 @@ class DB
                 // Add default access condition if the user condition was not found
                 $accessCondition = (object) [
                     'column' => 'access',
-                    'value' => '3', // Modify this value as needed
+                    'value' => '4', // Modify this value as needed
                     'operator' => '=',
                 ];
                 
