@@ -113,7 +113,18 @@
             {
                 $wh = Task::Where();
                 $wh->column   = TypeSanitizer::sanitizeField( $tv->column, 'name');
-                $wh->value    = TypeSanitizer::sanitizeField( $tv->value, 'string');
+                
+                if (is_string($tv->value)) {
+                    $wh->value = TypeSanitizer::sanitizeField($tv->value, 'string');
+                } elseif (is_array($tv->value)) {
+                    $sanitizedArray = array();
+                    foreach ($tv->value as $key => $value) {
+                        $sanitizedValue = TypeSanitizer::sanitizeField($value, 'string');
+                        $sanitizedArray[$key] = $sanitizedValue;
+                    }
+                    $wh->value = $sanitizedArray;
+                }
+
                 if (!isset($tv->operator) || $tv->operator == ""){
                     $wh->operator = "=";
                 } else {

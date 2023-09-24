@@ -223,15 +223,42 @@ class DB
             $conditions = [];
             foreach ($where as $condition) {
                 $column = $condition->column;
-                $operator = "=";
-                if (isset($condition->operator)){
-                    $operator = $condition->operator;
-                }
-                $value = $condition->value;
-                if (strtoupper($operator) == "BETWEEN"){
-                    $conditions[] = "`$column` $operator :$column AND :$column" . 2;
-                } else {
-                    $conditions[] = "`$column` $operator :$column";
+                if (is_string($column))
+                {
+                    $operator = "=";
+                    if (isset($condition->operator)){
+                        $operator = $condition->operator;
+                    }
+                    $value = $condition->value;
+                    if (strtoupper($operator) == "BETWEEN"){
+                        $conditions[] = "`$column` $operator :$column AND :$column" . 2;
+                    } else if (strtoupper($operator) == "LIKE") {
+                        $conditions[] = "`$column` $operator :$column";
+                    } else {
+                        $conditions[] = "`$column` $operator :$column";
+                    }
+                } else if (is_array($column)) {
+                    $resultCondition = "";
+                    for ($i=0; $i < count($column); $i++) { 
+                        $arcolumn = $column[$i];
+                        $operator = "=";
+                        $OR = "";
+                        if ($i < count($column) - 1){
+                            $OR = " OR ";
+                        }
+                        if (isset($condition->operator)){
+                            $operator = $condition->operator;
+                        }
+                        $value = $condition->value;
+                        if (strtoupper($operator) == "BETWEEN"){
+                            $resultCondition .= "`$arcolumn` $operator :$arcolumn AND :$arcolumn" . 2 . $OR;
+                        } else if (strtoupper($operator) == "LIKE") {
+                            $resultCondition .= "`$arcolumn` $operator :$arcolumn" . $OR;
+                        } else {
+                            $resultCondition .= "`$arcolumn` $operator :$arcolumn" . $OR;
+                        }
+                    }
+                    $conditions[] = $resultCondition;
                 }
             }
             $whereClause .= implode(' AND ', $conditions);
@@ -260,21 +287,49 @@ class DB
         // Bind the parameters for the WHERE conditions
         foreach ($where as $condition) {
             $column = $condition->column;
-            $value = $condition->value;
-            $operator = "=";
-            if (isset($condition->operator)){
-                $operator = $condition->operator;
-            }
-            if (is_float($value)){
-                $value = (float)$value;
-            } else
-            if (is_numeric($value)){
-                $value = (int)$value;
-            }
-            $newCon[$column] = $value;
-            if (strtoupper($operator) == "BETWEEN"){
-                $newCon[$column . "2"] = $condition->value2;
-            };
+            if (is_string($column))
+            {
+                $value = $condition->value;
+                $operator = "=";
+                if (isset($condition->operator)){
+                    $operator = $condition->operator;
+                }
+                if (is_float($value)){
+                    $value = (float)$value;
+                } else
+                if (is_numeric($value)){
+                    $value = (int)$value;
+                }
+                $newCon[$column] = $value;
+                if (strtoupper($operator) == "BETWEEN"){
+                    $newCon[$column . "2"] = $condition->value2;
+                };
+                if (strtoupper($operator) == "LIKE"){
+                    $newCon[$column] = '%' . $value . '%';
+                }
+            } else if (is_array($column)){
+                for ($i=0; $i < count($column); $i++) { 
+                    $arcolumn = $column[$i];
+                    $value = $condition->value;
+                    $operator = "=";
+                    if (isset($condition->operator)){
+                        $operator = $condition->operator;
+                    }
+                    if (is_float($value)){
+                        $value = (float)$value;
+                    } else
+                    if (is_numeric($value)){
+                        $value = (int)$value;
+                    }
+                    $newCon[$arcolumn] = $value;
+                    if (strtoupper($operator) == "BETWEEN"){
+                        $newCon[$arcolumn . "2"] = $condition->value2;
+                    };
+                    if (strtoupper($operator) == "LIKE"){
+                        $newCon[$arcolumn] = '%' . $value . '%';
+                    }
+                }
+            } 
         }
         
         // Execute the query
