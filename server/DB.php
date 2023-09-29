@@ -420,7 +420,7 @@ class DB
         $item = self::GetSingleRow($table, $object->id);
         if ($item != false){
             if ($item['user'] != $user){
-                return "No rigths for delete.";
+                return "No rigths for update.";
             }
             if ($item['locked'] == 1){
                 return "The item is locked.";
@@ -540,5 +540,331 @@ class DB
             // If there's an exception (error), catch it and return false
             return $e;
         }
+    }
+
+
+    public static function deleteByParams($task, $user) {
+        $results = [];
+    try {
+        
+        $where = $task->where;
+            $table = strtolower($task->objects[0]->Name());
+            
+            $whereClause = '';
+            if (!empty($where)) {
+                $whereClause = 'WHERE (';
+                $conditions = [];
+                foreach ($where as $condition) {
+                    $column = $condition->column;
+                    if (is_string($column))
+                    {
+                        if ($column == 'user'){ continue; };
+                        $operator = "=";
+                        if (isset($condition->operator)){
+                            $operator = $condition->operator;
+                        }
+                        $value = $condition->value;
+                        if (strtoupper($operator) == "BETWEEN"){
+                            $conditions[] = "`$column` $operator :$column AND :$column" . 2;
+                        } else if (strtoupper($operator) == "LIKE") {
+                            $conditions[] = "`$column` $operator :$column";
+                        } else {
+                            $conditions[] = "`$column` $operator :$column";
+                        }
+                    } else if (is_array($column)) {
+                        $resultCondition = "";
+                        for ($i=0; $i < count($column); $i++) { 
+                            $arcolumn = $column[$i];
+                            $operator = "=";
+                            $OR = "";
+                            if ($i < count($column) - 1){
+                                $OR = " OR ";
+                            }
+                            if (isset($condition->operator)){
+                                $operator = $condition->operator;
+                            }
+                            $value = $condition->value;
+                            if (strtoupper($operator) == "BETWEEN"){
+                                $resultCondition .= "`$arcolumn` $operator :$arcolumn AND :$arcolumn" . 2 . $OR;
+                            } else if (strtoupper($operator) == "LIKE") {
+                                $resultCondition .= "`$arcolumn` $operator :$arcolumn" . $OR;
+                            } else {
+                                $resultCondition .= "`$arcolumn` $operator :$arcolumn" . $OR;
+                            }
+                        }
+                        $conditions[] = $resultCondition;
+                    }
+                }
+                $whereClause .= implode(' AND ', $conditions);
+            }
+            if ($whereClause != ''){
+                $whereClause = $whereClause . ") AND";
+            } else {
+                $whereClause = 'WHERE';
+            }
+    
+            
+            $query = "DELETE FROM `$table` $whereClause `user` = :user";
+            $pdo = DB::GetPdo();
+            $stmt = $pdo->prepare($query);
+            // Bind the parameters for the WHERE conditions
+            
+            $newCon = [];
+            foreach ($where as $condition) {
+                $column = $condition->column;
+                if (is_string($column))
+                {
+                    if ($column == 'user'){
+                        continue;
+                    }
+                    $value = $condition->value;
+                    $operator = "=";
+                    if (isset($condition->operator)){
+                        $operator = $condition->operator;
+                    }
+                    if (is_float($value)){
+                        $value = (float)$value;
+                    } else
+                    if (is_numeric($value)){
+                        $value = (int)$value;
+                    }
+                    $newCon[$column] = $value;
+                    if (strtoupper($operator) == "BETWEEN"){
+                        $newCon[$column . "2"] = $condition->value2;
+                    };
+                    if (strtoupper($operator) == "LIKE"){
+                        $newCon[$column] = '%' . $value . '%';
+                    }
+                } else if (is_array($column)){
+                    for ($i=0; $i < count($column); $i++) { 
+                        $arcolumn = $column[$i];
+                        $value = $condition->value;
+                        $operator = "=";
+                        if (isset($condition->operator)){
+                            $operator = $condition->operator;
+                        }
+                        if (is_float($value)){
+                            $value = (float)$value;
+                        } else
+                        if (is_numeric($value)){
+                            $value = (int)$value;
+                        }
+                        $newCon[$arcolumn] = $value;
+                        if (strtoupper($operator) == "BETWEEN"){
+                            $newCon[$arcolumn . "2"] = $condition->value2;
+                        };
+                        if (strtoupper($operator) == "LIKE"){
+                            $newCon[$arcolumn] = '%' . $value . '%';
+                        }
+                    }
+                } 
+            }
+
+            $newCon['user'] = $user;
+            // $stmt->bindValue(':user', $user);
+            
+            // Execute the DELETE statement
+            $stmt->execute($newCon);
+            $results[] = []; // Success
+            
+        } catch (PDOException $e) {
+            // If there's an exception (error), catch it and return false
+            return $e;
+        }
+        return $results;
+    }
+
+    public static function countRows($task)
+    {
+         $table   = strtolower($task->type);
+         $where   = $task->where;
+         $limit   = $task->limit;
+         $offset  = $task->offset;
+         $order   = $task->order;
+        // Check if User can access the data only if Table contains "access" column
+        if (isset($task->map['access'])) {
+            $accessConditions = [];
+            $hasAccess = false;
+            $userMatch = false;
+            foreach ($where as $taskwhere) {
+                if (isset($taskwhere->column) && $taskwhere->column == "user") {
+                    if ($taskwhere->value == $task->user) {
+                        $userMatch = true;
+                        
+                    } else {
+                        // Add access condition only if the user does not match
+                        $accessCondition = (object) [
+                            'column' => 'access',
+                            'value' => '3', // Modify this value as needed
+                            'operator' => '=',
+                        ];
+                        $accessConditions[] = $accessCondition;
+                    }
+                }
+                if (isset($taskwhere->column) && $taskwhere->column == "access") {
+                    $hasAccess = true;
+                }
+            }
+    
+            if (!$userMatch && $hasAccess) {
+                $modifiedAccessConditions = [];
+                foreach ($where as $taskwhere) {
+                    if (isset($taskwhere->column) && $taskwhere->column == "access") {
+                        $modifiedAccessCondition = (object) [
+                            'column' => 'access',
+                            'value' => '3',
+                            'operator' => '=',
+                        ];
+                        $modifiedAccessConditions[] = $modifiedAccessCondition;
+                    } else {
+                        $modifiedAccessConditions[] = $taskwhere;
+                    }
+                }
+                $where = $modifiedAccessConditions;
+            }
+    
+            if (!$userMatch && count($accessConditions) == 0 && !$hasAccess) {
+                // Add default access condition if the user condition was not found
+                $accessCondition = (object) [
+                    'column' => 'access',
+                    'value' => '4', // Modify this value as needed
+                    'operator' => '=',
+                ];
+                
+                $accessConditions[] = $accessCondition;
+            }
+    
+            // Merge access conditions with the original where array
+            $where = array_merge($where, $accessConditions);
+        }
+
+        $db = DB::GetPdo();
+
+        $whereClause = '';
+        if (!empty($where)) {
+            $whereClause = 'WHERE (';
+            $conditions = [];
+            foreach ($where as $condition) {
+                $column = $condition->column;
+                if (is_string($column))
+                {
+                    $operator = "=";
+                    if (isset($condition->operator)){
+                        $operator = $condition->operator;
+                    }
+                    $value = $condition->value;
+                    if (strtoupper($operator) == "BETWEEN"){
+                        $conditions[] = "`$column` $operator :$column AND :$column" . 2;
+                    } else if (strtoupper($operator) == "LIKE") {
+                        $conditions[] = "`$column` $operator :$column";
+                    } else {
+                        $conditions[] = "`$column` $operator :$column";
+                    }
+                } else if (is_array($column)) {
+                    $resultCondition = "";
+                    for ($i=0; $i < count($column); $i++) { 
+                        $arcolumn = $column[$i];
+                        $operator = "=";
+                        $OR = "";
+                        if ($i < count($column) - 1){
+                            $OR = " OR ";
+                        }
+                        if (isset($condition->operator)){
+                            $operator = $condition->operator;
+                        }
+                        $value = $condition->value;
+                        if (strtoupper($operator) == "BETWEEN"){
+                            $resultCondition .= "`$arcolumn` $operator :$arcolumn AND :$arcolumn" . 2 . $OR;
+                        } else if (strtoupper($operator) == "LIKE") {
+                            $resultCondition .= "`$arcolumn` $operator :$arcolumn" . $OR;
+                        } else {
+                            $resultCondition .= "`$arcolumn` $operator :$arcolumn" . $OR;
+                        }
+                    }
+                    $conditions[] = $resultCondition;
+                }
+            }
+            $whereClause .= implode(' AND ', $conditions);
+        }
+        if ($whereClause != ''){
+            $whereClause = $whereClause . ")";
+        }
+
+        $limitClause = '';
+        if ($limit > 0) {
+            $limitClause = "LIMIT $limit";
+            if ($offset > 0) {
+                $limitClause .= " OFFSET $offset";
+            }
+        }
+
+        $orderClause = '';
+        if (!empty($order)) {
+            $orderClause = "ORDER BY $order";
+        }
+        $query = "SELECT COUNT(*) FROM `$table` $whereClause $orderClause $limitClause";
+
+        $stmt = $db->prepare($query);
+
+        $newCon = [];
+        // Bind the parameters for the WHERE conditions
+        foreach ($where as $condition) {
+            $column = $condition->column;
+            if (is_string($column))
+            {
+                $value = $condition->value;
+                $operator = "=";
+                if (isset($condition->operator)){
+                    $operator = $condition->operator;
+                }
+                if (is_float($value)){
+                    $value = (float)$value;
+                } else
+                if (is_numeric($value)){
+                    $value = (int)$value;
+                }
+                $newCon[$column] = $value;
+                if (strtoupper($operator) == "BETWEEN"){
+                    $newCon[$column . "2"] = $condition->value2;
+                };
+                if (strtoupper($operator) == "LIKE"){
+                    $newCon[$column] = '%' . $value . '%';
+                }
+            } else if (is_array($column)){
+                for ($i=0; $i < count($column); $i++) { 
+                    $arcolumn = $column[$i];
+                    $value = $condition->value;
+                    $operator = "=";
+                    if (isset($condition->operator)){
+                        $operator = $condition->operator;
+                    }
+                    if (is_float($value)){
+                        $value = (float)$value;
+                    } else
+                    if (is_numeric($value)){
+                        $value = (int)$value;
+                    }
+                    $newCon[$arcolumn] = $value;
+                    if (strtoupper($operator) == "BETWEEN"){
+                        $newCon[$arcolumn . "2"] = $condition->value2;
+                    };
+                    if (strtoupper($operator) == "LIKE"){
+                        $newCon[$arcolumn] = '%' . $value . '%';
+                    }
+                }
+            } 
+        }
+        
+        // Execute the query
+        $stmt->execute($newCon);
+
+        // Fetch the rows
+        $count = $stmt->fetchColumn();
+
+        if ($count) {
+            return $count;
+        }
+
+        return 0;
     }
 }

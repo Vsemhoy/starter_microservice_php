@@ -136,7 +136,7 @@
             {
                 $wh = Task::Where();
                 $wh->column   = TypeSanitizer::sanitizeField( $tv->column, 'name');
-                
+
                 if (is_string($tv->value)) {
                     $wh->value = TypeSanitizer::sanitizeField($tv->value, 'string');
                 } elseif (is_array($tv->value)) {
@@ -277,8 +277,10 @@
                 $task->results = $newObjects;
                 break;
 
-             // 7 - delete rows
-             case 7:
+            // 7 - update single column value
+
+             // 10 - delete rows
+             case 10:
                 $newObjects = [];
                 $sanitizedObjects = [];
                 foreach ($task->objects AS $getObj){
@@ -305,6 +307,40 @@
                 $task->results = $newObjects;
                 //$task->Simplify();
                 break;
+
+                // 11 parametric Delete
+                             // 10 - delete rows
+             case 11:
+
+                $sanitizedObjects = [];
+                $task->objects = [];
+                $newObj = getTypeByName($task->type);
+                // prepare to store into db
+                
+                $newObj->user = $inputObj->user;
+                array_push($sanitizedObjects, $newObj);
+                
+                $task->objects = $sanitizedObjects;
+                $results  = DB::deleteByParams($task, $globalUser);
+                    if (is_string($results)){
+                        $response->status = 1;
+                        $response->message = $result;
+                        $task->results = [];
+                    } else {
+                        $task->results = $results;
+                    }
+
+                //$task->Simplify();
+                break;
+
+            // 20 - count rows
+            case 20:
+                $rowData = DB::countRows($task);
+                if ($rowData == false){ break; };
+                $task->results = [$rowData];
+                $task->Simplify();
+                break;
+            break;
         }
         array_push( $response->results, $task);
         
