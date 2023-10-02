@@ -32,6 +32,10 @@ class Task
         string $user,
         int    $action, 
         string $type,
+        /**
+         * write DB object when simple update\write (like Event\Category etc)
+         * write array of objects like [{'column': 'locked', 'value' : '0'}] if Parametric update!
+         */
         array  $objects      = [],
         array  $where       = [],
         string $order       = "",

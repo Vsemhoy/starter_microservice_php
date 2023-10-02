@@ -95,6 +95,28 @@ class DB
         $do = $db->query($query);
     }
 
+    public static function isColumnExists(string $tableName, string $columnName){
+        try {
+            $db = DB::GetPdo();
+            $stmt = $db->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = :table_name AND COLUMN_NAME = :column_name");
+            $stmt->bindParam(':table_name', $tableName, PDO::PARAM_STR);
+            $stmt->bindParam(':column_name', $columnName, PDO::PARAM_STR);
+            $stmt->execute();
+        
+            $result = $stmt->fetch();
+        
+            if ($result) {
+                //echo "The '$columnName' column exists in the '$tableName' table.";
+                return true;
+            } else {
+                //echo "The '$columnName' column does not exist in the '$tableName' table.";
+                return false;
+            }
+        } catch (PDOException $e) {
+            //echo "Error: " . $e->getMessage();
+            return false;
+        }
+    }
 
     public static function CheckFreeId(string $table, string $id) : bool
     {
@@ -419,10 +441,11 @@ class DB
 
         $item = self::GetSingleRow($table, $object->id);
         if ($item != false){
-            if ($item['user'] != $user){
-                return "No rigths for update.";
+            if (isset($item['user']) && $item['user'] != $user){
+                return "No rigths for delete.";
             }
-            if ($item['locked'] == 1){
+            
+            if (isset($item['locked']) && $item['locked'] == 1){
                 return "The item is locked.";
             }
         }
@@ -460,6 +483,168 @@ class DB
             // If there's an exception (error), catch it and return false
             return $e;
         }
+    }
+
+
+    public static function updateByParams($task, $user) {
+        $results = [];
+    try {
+        
+        $where = $task->where;
+            $table = strtolower($task->objects[0]->Name());
+            // Know if column is locked and locked is exists
+            $paramLockedExists = DB::isColumnExists($table, 'locked');
+
+            $whereClause = '';
+            if (!empty($where)) {
+                $whereClause = 'WHERE (';
+                $conditions = [];
+                foreach ($where as $condition) {
+                    $column = $condition->column;
+                    if (is_string($column))
+                    {
+                        if ($column == 'user'){ continue; };
+                        if ($column == 'locked'){ continue; };
+                        $operator = "=";
+                        if (isset($condition->operator)){
+                            $operator = $condition->operator;
+                        }
+                        $value = $condition->value;
+                        if (strtoupper($operator) == "BETWEEN"){
+                            $conditions[] = "`$column` $operator :$column AND :$column" . 2;
+                        } else if (strtoupper($operator) == "LIKE") {
+                            $conditions[] = "`$column` $operator :$column";
+                        } else {
+                            $conditions[] = "`$column` $operator :$column";
+                        }
+                    } else if (is_array($column)) {
+                        $resultCondition = "";
+                        for ($i=0; $i < count($column); $i++) { 
+                            $arcolumn = $column[$i];
+                            $operator = "=";
+                            $OR = "";
+                            if ($i < count($column) - 1){
+                                $OR = " OR ";
+                            }
+                            if (isset($condition->operator)){
+                                $operator = $condition->operator;
+                            }
+                            $value = $condition->value;
+                            if (strtoupper($operator) == "BETWEEN"){
+                                $resultCondition .= "`$arcolumn` $operator :$arcolumn AND :$arcolumn" . 2 . $OR;
+                            } else if (strtoupper($operator) == "LIKE") {
+                                $resultCondition .= "`$arcolumn` $operator :$arcolumn" . $OR;
+                            } else {
+                                $resultCondition .= "`$arcolumn` $operator :$arcolumn" . $OR;
+                            }
+                        }
+                        $conditions[] = $resultCondition;
+                    }
+                }
+                $whereClause .= implode(' AND ', $conditions);
+            }
+            if ($whereClause != ''){
+                $whereClause = $whereClause . ") AND";
+            } else {
+                $whereClause = 'WHERE';
+            }
+    
+            $lockedQueryChunk = '';
+            if ($paramLockedExists){
+                $lockedQueryChunk = " AND `locked` = :locked";
+            }
+            
+
+
+
+            $dataToUpdate = [];
+            $setClause = ''; 
+            foreach ($task->object as $key => $value) {
+                $setClause .= "`$key` = :" . $key . "up, ";
+                $dataToUpdate[$key . "up"] = $value;
+            }
+            
+            $setClause = rtrim($setClause, ', ');
+            
+            $query = "UPDATE `$table` SET $setClause $whereClause `user` = :user" . $lockedQueryChunk;
+            $pdo = DB::GetPdo();
+            $stmt = $pdo->prepare($query);
+            // Bind the parameters for the WHERE conditions
+            
+            $newCon = [];
+            foreach ($where as $condition) {
+                $column = $condition->column;
+                if (is_string($column))
+                {
+                    if ($column == 'user'){
+                        continue;
+                    }
+                    if ($column == 'locked')
+                    { 
+                        continue;
+                    };
+                    $value = $condition->value;
+                    $operator = "=";
+                    if (isset($condition->operator)){
+                        $operator = $condition->operator;
+                    }
+                    if (is_float($value)){
+                        $value = (float)$value;
+                    } else
+                    if (is_numeric($value)){
+                        $value = (int)$value;
+                    }
+                    $newCon[$column] = $value;
+                    if (strtoupper($operator) == "BETWEEN"){
+                        $newCon[$column . "2"] = $condition->value2;
+                    };
+                    if (strtoupper($operator) == "LIKE"){
+                        $newCon[$column] = '%' . $value . '%';
+                    }
+                } else if (is_array($column)){
+                    for ($i=0; $i < count($column); $i++) { 
+                        $arcolumn = $column[$i];
+                        $value = $condition->value;
+                        $operator = "=";
+                        if (isset($condition->operator)){
+                            $operator = $condition->operator;
+                        }
+                        if (is_float($value)){
+                            $value = (float)$value;
+                        } else
+                        if (is_numeric($value)){
+                            $value = (int)$value;
+                        }
+                        $newCon[$arcolumn] = $value;
+                        if (strtoupper($operator) == "BETWEEN"){
+                            $newCon[$arcolumn . "2"] = $condition->value2;
+                        };
+                        if (strtoupper($operator) == "LIKE"){
+                            $newCon[$arcolumn] = '%' . $value . '%';
+                        }
+                    }
+                } 
+            }
+
+            $newCon['user'] = $user;
+            if ($paramLockedExists){
+                $newCon['locked'] = 0;
+            }
+            // $stmt->bindValue(':user', $user);
+            
+            // Execute the Update statement
+            // Bind the values from the object's properties to the placeholders
+            foreach ($dataToUpdate as $key => $value) {
+                $stmt->bindValue(":$key", $value);
+            }
+            $stmt->execute($newCon);
+            $results[] = []; // Success
+            
+        } catch (PDOException $e) {
+            // If there's an exception (error), catch it and return false
+            return $e;
+        }
+        return $results;
     }
 
 
@@ -519,8 +704,12 @@ class DB
 
         $item = self::GetSingleRow($table, $id);
         if ($item != false){
-            if ($item['user'] != $user){
+            if (isset($item['user']) && $item['user'] != $user){
                 return "No rigths for delete.";
+            }
+            
+            if (isset($item['locked']) && $item['locked'] == 1){
+                return "The item is locked.";
             }
         }
 
@@ -549,7 +738,9 @@ class DB
         
         $where = $task->where;
             $table = strtolower($task->objects[0]->Name());
-            
+            // Know if column is locked and locked is exists
+            $paramLockedExists = DB::isColumnExists($table, 'locked');
+
             $whereClause = '';
             if (!empty($where)) {
                 $whereClause = 'WHERE (';
@@ -559,6 +750,7 @@ class DB
                     if (is_string($column))
                     {
                         if ($column == 'user'){ continue; };
+                        if ($column == 'locked'){ continue; };
                         $operator = "=";
                         if (isset($condition->operator)){
                             $operator = $condition->operator;
@@ -602,9 +794,12 @@ class DB
             } else {
                 $whereClause = 'WHERE';
             }
-    
+            $lockedQueryChunk = '';
+            if ($paramLockedExists){
+                $lockedQueryChunk = " AND `locked` = :locked";
+            }
             
-            $query = "DELETE FROM `$table` $whereClause `user` = :user";
+            $query = "DELETE FROM `$table` $whereClause `user` = :user" . $lockedQueryChunk;
             $pdo = DB::GetPdo();
             $stmt = $pdo->prepare($query);
             // Bind the parameters for the WHERE conditions
@@ -617,6 +812,10 @@ class DB
                     if ($column == 'user'){
                         continue;
                     }
+                    if ($column == 'locked')
+                    { 
+                        continue;
+                    };
                     $value = $condition->value;
                     $operator = "=";
                     if (isset($condition->operator)){
@@ -661,6 +860,9 @@ class DB
             }
 
             $newCon['user'] = $user;
+            if ($paramLockedExists){
+                $newCon['locked'] = 0;
+            }
             // $stmt->bindValue(':user', $user);
             
             // Execute the DELETE statement
