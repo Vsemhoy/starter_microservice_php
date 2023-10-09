@@ -8,6 +8,11 @@ class Event implements ObjectInterface
     const PREFIX = "s_";
     const FORMAT_TEXT = 0;
     const FORMAT_HTML = 1;
+    const FORMAT_MD   = 2;
+
+    const TYPE_EVENT = 1;
+    const TYPE_ACTION = 2;
+    const TYPE_NOTE = 3;
 
     public string $id;
     public string $parent;
@@ -25,13 +30,15 @@ class Event implements ObjectInterface
     public int $status;
     public int $starred;
     public int $pinned;
-    public int $importance;
+    public int $type;
     public string $location;
     
     public string $setdate;
     public string $created_at;
     public string $updated_at;
     
+    public string $params;
+
 
     public function __construct(string $title = "", string $user = '__NULL__', string $id = "")
     {
@@ -65,13 +72,14 @@ class Event implements ObjectInterface
         $this->status     = 1;
         $this->starred    = 0;
         $this->pinned     = 0;
-        $this->importance = 2;
+        $this->type       = 1;
 
         $this->setdate    = date("Y-m-d");
         $this->created_at = $dt;
         $this->updated_at = $dt;
 
         $this->location  = "";
+        $this->params = "";
     }
 
     // Get new unique ID
@@ -87,19 +95,20 @@ class Event implements ObjectInterface
         CREATE TABLE IF NOT EXISTS `event` (
             `id` CHAR(25) NOT NULL,
             `parent` CHAR(25),
+            `type` TINYINT DEFAULT 1,
             `title` VARCHAR(200) NOT NULL,
             `section` CHAR(15),
             `category` CHAR(15),
             `user` CHAR(8) NOT NULL,
             `client` VARCHAR(120),
             `content` TEXT,
+            `params` TEXT,
             `format` TINYINT DEFAULT 0,
             `locked` TINYINT DEFAULT 0,
             `access` TINYINT DEFAULT 1,
             `status` TINYINT DEFAULT 0,
             `starred` TINYINT DEFAULT 0,
             `pinned` TINYINT DEFAULT 0,
-            `importance` TINYINT DEFAULT 0 CHECK (importance >= 0 AND importance <= 10),
             `location` VARCHAR(50),
             `setdate` DATE,
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -118,7 +127,8 @@ class Event implements ObjectInterface
             'title'    => 190,
             'client'   => 120,
             'content'  => 99000,
-            'location' => 50
+            'location' => 50,
+            'params'   => 5000,
         ];
         if (isset($lim[$key])){
             return $lim[$key];
@@ -133,6 +143,7 @@ class Event implements ObjectInterface
     public static array $sanitize_map = [
         'id'         => 'string',
         'format'     => 'int', // Format can be always before content
+        'type'       => 'int',
         'parent'     => 'string',
         'title'      => 'title',
         'section'    => 'string',
@@ -140,12 +151,12 @@ class Event implements ObjectInterface
         'user'       => 'string',
         'client'     => 'string',
         'content'    => 'html',
+        'params'     => 'json',
         'locked'     => 'int',
         'access'     => 'int',
         'status'     => 'int',
         'starred'    => 'int',
         'pinned'     => 'int',
-        'importance' => 'int',
         'location'   => 'json',
         'setdate'    => 'date', // Assuming date is passed as a string
         'created_at' => 'datetime', // Assuming date is passed as a string
