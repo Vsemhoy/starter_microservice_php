@@ -348,7 +348,7 @@ class DB
         }
 
         $limitClause = '';
-        if ($limit > 0) {
+        if ($limit > 0 && $limit < 1001) {
             $limitClause = "LIMIT $limit";
             if ($offset > 0) {
                 $limitClause .= " OFFSET $offset";
