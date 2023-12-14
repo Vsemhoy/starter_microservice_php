@@ -22,6 +22,7 @@
 ?>
 
 <?php
+
 // this source code stores in /source/index_source.php
     // echo A::Hello();
     // echo C::Hello();
@@ -278,6 +279,30 @@
                 break;
 
             // 7 - update single column value
+            case 7:
+             $newObjects = [];
+            $sanitizedObjects = [];
+            $ok = false;
+            foreach ($task->objects[0] AS $key => $value){
+                $newObj = getTypeByName($task->type);
+                $typeOfValue = $newObj->sanitizeMap();
+                if ($typeOfValue[$key] == null){ break; };
+                $sanvalue = TypeSanitizer::sanitizeField($value, $typeOfValue[$key]);
+                $sanitizedObjects[0][$key] = $sanvalue;
+            }
+            $task->objects[0] = $sanitizedObjects;
+            if (count($sanitizedObjects) == 0){
+                break;
+            }
+            $result  = DB::updateByParams($task, $globalUser);
+            if (is_string($result)){
+                $response->status = 1;
+                $response->message = $result;
+            } else {
+                array_push( $newObjects , $result);
+            }
+            $task->results = $newObjects;
+            break;
 
              // 10 - delete rows
              case 10:
@@ -349,54 +374,4 @@
     echo json_encode($response);
     return;
     
-    return;
-    echo "<br>";
-    echo $inputObj->user;
-
-
-    
-    echo uniqid();
-    echo "<br>";
-    echo uniqid('', true);
-    echo "<br>";
-
-
-    $timestamp = '1299762201428';
-    $date = date('Y-m-d H:i:s', substr($timestamp, 0, -3));
-    
-
-    $ev = new Event("Hellow", 33);
-    print_r($ev);
-
-
-    echo $_SERVER['REMOTE_ADDR'];
-
-
-    $evt = Event::createTableQueryText();
-    DB::createTable($evt);
-    $evt = Category::createTableQueryText();
-    DB::createTable($evt);
-    $evt = Section::createTableQueryText();
-    DB::createTable($evt);
-
-
-    $event = new Event("The name of second... ZZZ", 7);
-    print_r($event);
-    echo DB::writeObject($event);
-
-    echo $event->Name();
-    echo "<br>";
-    echo "<br>";
-    print_r(DB::GetRows("event", "user", 7));
-
-    // `page_ID` INT AUTO_INCREMENT NOT NULL,
-    // `url` varchar(200) NOT NULL,
-    // `title` varchar(200),
-    // `content` TEXT,
-    // `parent` varchar(10),
-    // `privacy` varchar(1),
-    // `status` varchar(1),
-    // `creation` varchar(30),
-    // PRIMARY KEY (`page_ID`)) 
-    // CHARACTER SET utf8 COLLATE utf8mb4_general_ci
 ?>

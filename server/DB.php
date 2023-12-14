@@ -252,10 +252,42 @@ class DB
                         $operator = $condition->operator;
                     }
                     $value = $condition->value;
+
                     if (strtoupper($operator) == "BETWEEN"){
                         $conditions[] = "`$column` $operator :$column AND :$column" . 2;
                     } else if (strtoupper($operator) == "LIKE") {
-                        $conditions[] = "`$column` $operator :$column";
+                        
+                        if (is_array($value)) {
+                            $count = 0;
+                            $wordArray = [];
+                            foreach ($value as $word) {
+                                if (trim($word) != ""){
+                                    $wordArray[] = "`$arcolumn` $operator :$arcolumn" . $count . " ";
+                                }
+                                $count++;
+                            };
+                            $conditions[] = implode(' AND ', $wordArray);
+                            
+                        } else {
+
+                            if (is_array($value)) {
+                                $count = 0;
+                                $wordArray = [];
+                                foreach ($value as $word) {
+                                    if (trim($word) != ""){
+                                        $wordArray[] = "`$arcolumn` $operator :$arcolumn" . $count . " ";
+                                    }
+                                    $count++;
+                                };
+                                $conditions[] = implode(' AND ', $wordArray);
+                                
+                            } else {
+    
+                                $conditions[] = "`$column` $operator :$column";
+                            }
+
+                        }
+
                     } else {
                         $conditions[] = "`$column` $operator :$column";
                     }
@@ -275,9 +307,35 @@ class DB
                         if (strtoupper($operator) == "BETWEEN"){
                             $resultCondition .= "`$arcolumn` $operator :$arcolumn AND :$arcolumn" . 2 . $OR;
                         } else if (strtoupper($operator) == "LIKE") {
-                            $resultCondition .= "`$arcolumn` $operator :$arcolumn" . $OR;
+                            if (is_array($value)) {
+                                $count = 0;
+                                $wordArray = [];
+                                foreach ($value as $word) {
+                                    if (trim($word) != ""){
+                                        $wordArray[] = "`$arcolumn` $operator :$arcolumn" . $count . " ";
+                                    }
+                                    $count++;
+                                };
+                                $resultCondition .= implode(' AND ', $wordArray);
+                                $resultCondition .= $OR;
+                            } else {
+                                $resultCondition .= "`$arcolumn` $operator :$arcolumn" . $OR;
+                            }
                         } else {
-                            $resultCondition .= "`$arcolumn` $operator :$arcolumn" . $OR;
+                            if (is_array($value)) {
+                                $count = 0;
+                                $wordArray = [];
+                                foreach ($value as $word) {
+                                    if (trim($word) != ""){
+                                        $wordArray[] = "`$arcolumn` $operator :$arcolumn" . $count . " ";
+                                    }
+                                    $count++;
+                                };
+                                $resultCondition .= implode(' AND ', $wordArray);
+                                $resultCondition .= $OR;
+                            } else {
+                                $resultCondition .= "`$arcolumn` $operator :$arcolumn" . $OR;
+                            }
                         }
                     }
                     $conditions[] = $resultCondition;
@@ -292,6 +350,11 @@ class DB
         $limitClause = '';
         if ($limit > 0) {
             $limitClause = "LIMIT $limit";
+            if ($offset > 0) {
+                $limitClause .= " OFFSET $offset";
+            }
+        } else {
+            $limitClause = "LIMIT 1000";
             if ($offset > 0) {
                 $limitClause .= " OFFSET $offset";
             }
@@ -316,19 +379,46 @@ class DB
                 if (isset($condition->operator)){
                     $operator = $condition->operator;
                 }
-                if (is_float($value)){
-                    $value = (float)$value;
-                } else
-                if (is_numeric($value)){
-                    $value = (int)$value;
-                }
-                $newCon[$column] = $value;
+
+                if (is_array($value)){
+
+                    $count = 0;
+                    foreach ($value as $word) {
+                        if (trim($word) != ""){
+                           
+                            if (is_float($word)){
+                                $word = (float)$word;
+                            } else
+                            if (is_numeric($word)){
+                                $word = (int)$word;
+                            }
+                            $newCon[$column . $count] = $word;
+                            if (strtoupper($operator) == "LIKE"){
+                                $newCon[$column . $count] = '%' . $word . '%';
+                            }  
+
+                        }
+                        $count++;
+                    };
+                    
+                } else {
+                    if (is_float($value)){
+                        $value = (float)$value;
+                    } else
+                    if (is_numeric($value)){
+                        $value = (int)$value;
+                    }
+                    $newCon[$column] = $value;
+                };
+
                 if (strtoupper($operator) == "BETWEEN"){
                     $newCon[$column . "2"] = $condition->value2;
                 };
                 if (strtoupper($operator) == "LIKE"){
                     $newCon[$column] = '%' . $value . '%';
                 }
+
+
             } else if (is_array($column)){
                 for ($i=0; $i < count($column); $i++) { 
                     $arcolumn = $column[$i];
@@ -337,19 +427,43 @@ class DB
                     if (isset($condition->operator)){
                         $operator = $condition->operator;
                     }
-                    if (is_float($value)){
-                        $value = (float)$value;
-                    } else
-                    if (is_numeric($value)){
-                        $value = (int)$value;
+                    if (is_array($value)){
+
+                        $count = 0;
+                        foreach ($value as $word) {
+                            if (trim($word) != ""){
+                               
+                                if (is_float($word)){
+                                    $value = (float)$word;
+                                } else
+                                if (is_numeric($word)){
+                                    $value = (int)$word;
+                                }
+                                $newCon[$arcolumn . $count] = $word;
+                                if (strtoupper($operator) == "LIKE"){
+                                    $newCon[$arcolumn . $count] = '%' . $word . '%';
+                                }  
+
+                            }
+                            $count++;
+                        };
+                        
+                    } else {
+                        if (is_float($value)){
+                            $value = (float)$value;
+                        } else
+                        if (is_numeric($value)){
+                            $value = (int)$value;
+                        }
+                        $newCon[$arcolumn] = $value;
+                        if (strtoupper($operator) == "BETWEEN"){
+                            $newCon[$arcolumn . "2"] = $condition->value2;
+                        };
+                        if (strtoupper($operator) == "LIKE"){
+                            $newCon[$arcolumn] = '%' . $value . '%';
+                        }  
                     }
-                    $newCon[$arcolumn] = $value;
-                    if (strtoupper($operator) == "BETWEEN"){
-                        $newCon[$arcolumn . "2"] = $condition->value2;
-                    };
-                    if (strtoupper($operator) == "LIKE"){
-                        $newCon[$arcolumn] = '%' . $value . '%';
-                    }
+
                 }
             } 
         }
@@ -488,22 +602,25 @@ class DB
 
     public static function updateByParams($task, $user) {
         $results = [];
-    try {
+        try {
         
         $where = $task->where;
-            $table = strtolower($task->objects[0]->Name());
-            // Know if column is locked and locked is exists
-            $paramLockedExists = DB::isColumnExists($table, 'locked');
+            $table = strtolower($task->type);
 
             $whereClause = '';
             if (!empty($where)) {
-                $whereClause = 'WHERE (';
+                $whereClause = 'WHERE ';
                 $conditions = [];
                 foreach ($where as $condition) {
                     $column = $condition->column;
                     if (is_string($column))
                     {
-                        if ($column == 'user'){ continue; };
+                        if ($column == 'user'){ 
+                            continue;
+                            if ($condition->value != $user){
+                                return "No rigths for update.";
+                            }
+                         };
                         if ($column == 'locked'){ continue; };
                         $operator = "=";
                         if (isset($condition->operator)){
@@ -544,29 +661,23 @@ class DB
                 $whereClause .= implode(' AND ', $conditions);
             }
             if ($whereClause != ''){
-                $whereClause = $whereClause . ") AND";
+                $whereClause = $whereClause . " AND";
             } else {
                 $whereClause = 'WHERE';
             }
     
-            $lockedQueryChunk = '';
-            if ($paramLockedExists){
-                $lockedQueryChunk = " AND `locked` = :locked";
-            }
-            
-
-
 
             $dataToUpdate = [];
             $setClause = ''; 
-            foreach ($task->object as $key => $value) {
+            foreach ($task->objects[0][0] as $key => $value) {
                 $setClause .= "`$key` = :" . $key . "up, ";
                 $dataToUpdate[$key . "up"] = $value;
             }
             
+
             $setClause = rtrim($setClause, ', ');
             
-            $query = "UPDATE `$table` SET $setClause $whereClause `user` = :user" . $lockedQueryChunk;
+            $query = "UPDATE `$table` SET $setClause $whereClause `user` = :user";
             $pdo = DB::GetPdo();
             $stmt = $pdo->prepare($query);
             // Bind the parameters for the WHERE conditions
@@ -594,50 +705,47 @@ class DB
                     if (is_numeric($value)){
                         $value = (int)$value;
                     }
-                    $newCon[$column] = $value;
+                    $stmt->bindValue(':' . $column, $value);
                     if (strtoupper($operator) == "BETWEEN"){
-                        $newCon[$column . "2"] = $condition->value2;
+                        $stmt->bindValue(':' . $column . "2", $condition->value2);
                     };
                     if (strtoupper($operator) == "LIKE"){
-                        $newCon[$column] = '%' . $value . '%';
+                        $stmt->bindValue(':' . $column, '%' . $value . '%');
                     }
                 } else if (is_array($column)){
-                    for ($i=0; $i < count($column); $i++) { 
-                        $arcolumn = $column[$i];
-                        $value = $condition->value;
-                        $operator = "=";
-                        if (isset($condition->operator)){
-                            $operator = $condition->operator;
-                        }
-                        if (is_float($value)){
-                            $value = (float)$value;
-                        } else
-                        if (is_numeric($value)){
-                            $value = (int)$value;
-                        }
-                        $newCon[$arcolumn] = $value;
-                        if (strtoupper($operator) == "BETWEEN"){
-                            $newCon[$arcolumn . "2"] = $condition->value2;
-                        };
-                        if (strtoupper($operator) == "LIKE"){
-                            $newCon[$arcolumn] = '%' . $value . '%';
-                        }
-                    }
+                    // for ($i=0; $i < count($column); $i++) { 
+                    //     $arcolumn = $column[$i];
+                    //     $value = $condition->value;
+                    //     $operator = "=";
+                    //     if (isset($condition->operator)){
+                    //         $operator = $condition->operator;
+                    //     }
+                    //     if (is_float($value)){
+                    //         $value = (float)$value;
+                    //     } else
+                    //     if (is_numeric($value)){
+                    //         $value = (int)$value;
+                    //     }
+                    //     $newCon[$arcolumn] = $value;
+                    //     if (strtoupper($operator) == "BETWEEN"){
+                    //         $newCon[$arcolumn . "2"] = $condition->value2;
+                    //     };
+                    //     if (strtoupper($operator) == "LIKE"){
+                    //         $newCon[$arcolumn] = '%' . $value . '%';
+                    //     }
+                    // }
                 } 
             }
-
-            $newCon['user'] = $user;
-            if ($paramLockedExists){
-                $newCon['locked'] = 0;
-            }
-            // $stmt->bindValue(':user', $user);
+            $stmt->bindValue(':user', $user);
             
+
             // Execute the Update statement
             // Bind the values from the object's properties to the placeholders
             foreach ($dataToUpdate as $key => $value) {
                 $stmt->bindValue(":$key", $value);
             }
-            $stmt->execute($newCon);
+         
+            $stmt->execute();
             $results[] = []; // Success
             
         } catch (PDOException $e) {

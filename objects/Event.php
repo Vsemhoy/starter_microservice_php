@@ -139,6 +139,10 @@ class Event implements ObjectInterface
     public static function getSanitizeMap(){
         return Event::$sanitize_map;
     }
+    
+    public function sanitizeMap(){
+        return Event::$sanitize_map;
+    }
 
     public static array $sanitize_map = [
         'id'         => 'string',
